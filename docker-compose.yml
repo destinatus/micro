@@ -11,7 +11,7 @@ services:
 
   consul:
     extends:
-      file: gateway-poc/docker-compose.yml
+      file: consul-poc/docker-compose.yml
       service: consul
 
   users-service:

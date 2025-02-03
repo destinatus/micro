@@ -1,3 +1,7 @@
+networks:
+  microservice_net:
+    external: true
+
 services:
   consul:
     image: hashicorp/consul:1.15.4
@@ -7,4 +11,11 @@ services:
       - "8600:8600/tcp"  # DNS
       - "8600:8600/udp"  # DNS
     command: "agent -dev -client=0.0.0.0"
-    network_mode: "host"
+    networks:
+      - microservice_net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8500/v1/status/leader"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s

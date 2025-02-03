@@ -1,7 +1,6 @@
 networks:
-  microservices:
-    name: microservices
-    driver: bridge
+  microservice_net:
+    external: true
 
 services:
   gateway:
@@ -18,28 +17,9 @@ services:
     ports:
       - "3000:3000"
     networks:
-      - microservices
-    depends_on:
-      - consul
+      - microservice_net
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
-
-  consul:
-    image: hashicorp/consul:1.15.4
-    container_name: consul
-    ports:
-      - "8500:8500"
-      - "8600:8600/tcp"
-      - "8600:8600/udp"
-    command: "agent -dev -client=0.0.0.0"
-    networks:
-      - microservices
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8500/v1/status/leader"]
       interval: 30s
       timeout: 10s
       retries: 3
