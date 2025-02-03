@@ -19,7 +19,6 @@ services:
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules
-      - ./wait-for-it.sh:/usr/local/bin/wait-for-it.sh
     restart: unless-stopped
     depends_on:
       postgres:
