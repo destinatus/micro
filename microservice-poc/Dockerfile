@@ -14,12 +14,13 @@ COPY . .
 # Build the application
 RUN npm run build
 
-# Install curl and netcat for healthcheck and wait-for-it script
-RUN apk --no-cache add curl netcat-openbsd
+# Install required packages
+RUN apk --no-cache add curl netcat-openbsd dos2unix
 
-# Copy and make wait-for-it script executable
-COPY wait-for-it.sh /usr/local/bin/wait-for-it.sh
-RUN chmod +x /usr/local/bin/wait-for-it.sh
+# Ensure wait-for-it.sh has proper line endings and permissions
+RUN dos2unix wait-for-it.sh && \
+    chmod +x wait-for-it.sh && \
+    mv wait-for-it.sh /usr/local/bin/
 
 # Expose port
 EXPOSE 3000
