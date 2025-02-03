@@ -1,0 +1,45 @@
+version: '3.8'
+
+name: microservice-stack
+
+services:
+  # Import services from individual docker-compose files
+  gateway:
+    extends:
+      file: gateway-poc/docker-compose.yml
+      service: gateway
+
+  consul:
+    extends:
+      file: gateway-poc/docker-compose.yml
+      service: consul
+
+  users-service:
+    extends:
+      file: microservice-poc/docker-compose.yml
+      service: service
+
+  postgres:
+    extends:
+      file: microservice-poc/docker-compose.yml
+      service: postgres
+
+  zookeeper:
+    extends:
+      file: debezium/docker-compose.debezium.yml
+      service: zookeeper
+
+  kafka:
+    extends:
+      file: debezium/docker-compose.debezium.yml
+      service: kafka
+
+  debezium:
+    extends:
+      file: debezium/docker-compose.debezium.yml
+      service: debezium
+
+networks:
+  microservice_net:
+    name: microservice_net
+    driver: bridge

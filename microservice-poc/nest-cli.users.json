@@ -1,0 +1,9 @@
+{
+  "collection": "@nestjs/schematics",
+  "sourceRoot": "src/users-service",
+  "entryFile": "main",
+  "compilerOptions": {
+    "deleteOutDir": true,
+    "webpack": true
+  }
+}

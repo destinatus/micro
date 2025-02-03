@@ -1,0 +1,20 @@
+{
+  "server": {
+    "port": 3001
+  },
+  "gateway": {
+    "port": 3002
+  },
+  "users": {
+    "port": 3003
+  },
+  "database": {
+    "postgres": {
+    "host": "postgres",
+    "port": 5432,
+    "user": "postgres",
+    "password": "postgres",
+    "database": "microservice_poc"
+    }
+  }
+}

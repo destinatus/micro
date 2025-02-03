@@ -1,0 +1,24 @@
+{
+    "name": "oracle-sink-connector",
+    "config": {
+        "connector.class": "io.confluent.connect.jdbc.JdbcSinkConnector",
+        "tasks.max": "1",
+        "topics": "microservice.public.users",
+        "connection.url": "jdbc:oracle:thin:@oracle:1521/XE",
+        "connection.user": "system",
+        "connection.password": "oracle",
+        "table.name.format": "USERS",
+        "insert.mode": "upsert",
+        "delete.enabled": "true",
+        "pk.mode": "record_key",
+        "auto.create": "true",
+        "key.converter": "org.apache.kafka.connect.json.JsonConverter",
+        "key.converter.schemas.enable": "false",
+        "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+        "value.converter.schemas.enable": "false",
+        "transforms": "unwrap",
+        "transforms.unwrap.type": "io.debezium.transforms.ExtractNewRecordState",
+        "transforms.unwrap.drop.tombstones": "true",
+        "transforms.unwrap.delete.handling.mode": "rewrite"
+    }
+}
