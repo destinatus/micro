@@ -1,27 +1,4 @@
 services:
-  gateway:
-    build:
-      context: .
-      dockerfile: Dockerfile.gateway
-    container_name: microservice-gateway
-    environment:
-      - NODE_ENV=production
-      - GATEWAY_PORT=3000
-      - USERS_SERVICE_HOST=service
-    ports:
-      - "3000:3000"  # Gateway HTTP port
-    restart: unless-stopped
-    depends_on:
-      - service
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:3000/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 15s
-    networks:
-      - microservice_net
-
   service:
     build:
       context: .
@@ -42,6 +19,7 @@ services:
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules
+      - ./wait-for-it.sh:/usr/local/bin/wait-for-it.sh
     restart: unless-stopped
     depends_on:
       postgres:
