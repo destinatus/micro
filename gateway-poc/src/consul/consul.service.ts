@@ -67,7 +67,7 @@ export class ConsulService implements OnModuleInit, OnModuleDestroy {
         port: config.port,
       };
 
-      this.consul = consul(consulOptions);
+      this.consul = new consul(consulOptions);
       this.logger.log(
         `Consul client initialized with config: ${JSON.stringify(consulOptions)}`,
       );
