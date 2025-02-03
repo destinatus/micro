@@ -5,7 +5,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as ConsulLib from 'consul';
+import consul from 'consul';
 import * as os from 'os';
 
 interface ConsulHealthCheck {
@@ -42,7 +42,7 @@ interface RegisterOptions {
 
 @Injectable()
 export class ConsulService implements OnModuleInit, OnModuleDestroy {
-  private consul: ConsulLib.Consul | null = null;
+  private consul: consul.Consul | null = null;
   private readonly serviceId: string;
   private readonly logger = new Logger(ConsulService.name);
 
@@ -67,7 +67,7 @@ export class ConsulService implements OnModuleInit, OnModuleDestroy {
         port: config.port,
       };
 
-      this.consul = new ConsulLib(consulOptions);
+      this.consul = consul(consulOptions);
       this.logger.log(
         `Consul client initialized with config: ${JSON.stringify(consulOptions)}`,
       );
