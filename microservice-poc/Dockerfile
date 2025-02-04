@@ -27,4 +27,4 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 EXPOSE 3001
 
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
-CMD ["node", "dist/src/users-service/main"]
+CMD ["node", "dist/main"]
