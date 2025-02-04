@@ -4,6 +4,6 @@
   "entryFile": "main",
   "compilerOptions": {
     "deleteOutDir": true,
-    "webpack": true
+    "webpack": false
   }
 }
