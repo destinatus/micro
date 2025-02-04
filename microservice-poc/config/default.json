@@ -1,7 +1,8 @@
 {
   "microservice": {
     "instanceId": "1",
-    "host": "users-service"
+    "host": "users-service",
+    "port": 3000
   },
   "consul": {
     "host": "consul",
@@ -14,11 +15,11 @@
   },
   "database": {
     "postgres": {
-    "host": "localhost",
+    "host": "postgres",
     "port": 5432,
     "user": "postgres",
     "password": "postgres",
-    "database": "microservice_poc"
+    "database": "users"
     }
   }
 }

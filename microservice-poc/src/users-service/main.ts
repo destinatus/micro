@@ -6,11 +6,14 @@ import { ConfigService } from '@nestjs/config';
 async function bootstrap() {
   const app = await NestFactory.create(UsersServiceModule);
   const configService = app.get(ConfigService);
-  await app.init();
+  const port = configService.get<number>('microservice.port') || 3000;
+  await app.listen(port);
 
   const logger = new Logger('Users');
   const instanceId = configService.get<string>('microservice.instanceId');
-  logger.log(`Users Microservice instance ${instanceId} is running`);
+  logger.log(
+    `Users Microservice instance ${instanceId} is running on port ${port}`,
+  );
 }
 
 bootstrap().catch((error) => {
