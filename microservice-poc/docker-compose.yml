@@ -12,7 +12,8 @@ services:
       - POSTGRES_DB=users
       - NODE_ENV=development
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "ps aux | grep node | grep -v grep || exit 1"]
       interval: 10s
