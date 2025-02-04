@@ -1,5 +1,5 @@
 # Build stage
-FROM node:20-alpine3.19 AS builder
+FROM node:20-alpine AS builder
 
 WORKDIR /usr/src/app
 
@@ -16,7 +16,7 @@ COPY . .
 RUN npx nest build --config nest-cli.users.json
 
 # Production stage
-FROM node:20-alpine3.19
+FROM node:20-alpine
 
 # Install PostgreSQL client
 RUN apk add --no-cache postgresql-client
