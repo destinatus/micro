@@ -6,24 +6,24 @@ services:
     deploy:
       replicas: 3
     environment:
-      - POSTGRES_HOST=postgres-users-${REPLICA_ID:-1}
+      - POSTGRES_HOST=postgres-users-{{.Task.Slot}}
       - POSTGRES_PORT=5432
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=users_service_${REPLICA_ID:-1}
+      - POSTGRES_DB=users_service_{{.Task.Slot}}
       - NODE_ENV=production
       - CONSUL_HOST=consul
       - CONSUL_PORT=8500
       - MICROSERVICE_HOST=0.0.0.0
       - MICROSERVICE_PORT=3001
-      - REPLICA_ID=${REPLICA_ID:-1}
+      - REPLICA_ID={{.Task.Slot}}
     hostname: "users-service-{{.Task.Slot}}"
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules
     restart: unless-stopped
     depends_on:
-      postgres-users-${REPLICA_ID:-1}:
+      postgres-users-{{.Task.Slot}}:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:3000/health"]
@@ -34,15 +34,15 @@ services:
     networks:
       - microservice_net
 
-  postgres-users-${REPLICA_ID:-1}:
+  postgres-users-{{.Task.Slot}}:
     image: postgres:14
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=users_service_${REPLICA_ID:-1}
+      - POSTGRES_DB=users_service_{{.Task.Slot}}
       - POSTGRES_MAX_CONNECTIONS=200
     volumes:
-      - postgres_data_users_${REPLICA_ID:-1}:/var/lib/postgresql/data
+      - postgres_data_users_{{.Task.Slot}}:/var/lib/postgresql/data
     command: 
       - "postgres"
       - "-c"
@@ -69,4 +69,4 @@ networks:
     driver: bridge
     
 volumes:
-  postgres_data_users_${REPLICA_ID:-1}:
+  postgres_data_users_{{.Task.Slot}}:
