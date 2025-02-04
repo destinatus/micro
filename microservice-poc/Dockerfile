@@ -1,10 +1,5 @@
-FROM node:18-bullseye
-
-# Install PostgreSQL client tools only
-RUN apt-get update && \
-    apt-get install -y postgresql-client && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+# Build stage
+FROM node:20-alpine3.19 AS builder
 
 WORKDIR /usr/src/app
 
@@ -20,11 +15,23 @@ COPY . .
 # Build the application
 RUN npx nest build --config nest-cli.users.json
 
-# Copy and make entrypoint script executable
-COPY docker-entrypoint.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+# Production stage
+FROM node:20-alpine3.19
 
-EXPOSE 3001
+# Install PostgreSQL client
+RUN apk add --no-cache postgresql-client
 
-ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
-CMD ["node", "dist/main"]
+WORKDIR /usr/src/app
+
+# Copy package files and install production dependencies
+COPY package*.json ./
+RUN npm ci --only=production
+
+# Copy built application from builder stage
+COPY --from=builder /usr/src/app/dist ./dist
+COPY --from=builder /usr/src/app/config ./config
+
+# Set NODE_ENV
+ENV NODE_ENV=production
+
+CMD ["node", "dist/users-service/main"]

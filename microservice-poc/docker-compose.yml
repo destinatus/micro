@@ -11,11 +11,6 @@ services:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=users
       - NODE_ENV=development
-    ports:
-      - "3000:3000"
-    volumes:
-      - .:/usr/src/app
-      - /usr/src/app/node_modules
     depends_on:
       - postgres
     healthcheck:
