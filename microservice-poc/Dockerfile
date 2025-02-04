@@ -1,13 +1,15 @@
+# syntax=docker/dockerfile:1.4
 # Build stage
-FROM node:20-alpine AS builder
+FROM node:20.11.0-alpine3.19 AS builder
 
 WORKDIR /usr/src/app
 
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci
+# Install dependencies with cache mounting
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci
 
 # Copy source code
 COPY . .
@@ -16,16 +18,17 @@ COPY . .
 RUN npx nest build --config nest-cli.users.json
 
 # Production stage
-FROM node:20-alpine
+FROM node:20.11.0-alpine3.19
 
 # Install PostgreSQL client
 RUN apk add --no-cache postgresql-client
 
 WORKDIR /usr/src/app
 
-# Copy package files and install production dependencies
+# Copy package files and install production dependencies with cache mounting
 COPY package*.json ./
-RUN npm ci --only=production
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci --only=production
 
 # Copy built application from builder stage
 COPY --from=builder /usr/src/app/dist ./dist

@@ -9,6 +9,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        - BUILDKIT_INLINE_CACHE=1
+    restart: unless-stopped
     environment:
       - POSTGRES_HOST=postgres
       - POSTGRES_USER=postgres
@@ -25,14 +28,14 @@ services:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "ps aux | grep node | grep -v grep || exit 1"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 3
       start_period: 15s
 
   postgres:
-    image: postgres:15
+    image: postgres:15.5-alpine
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
@@ -47,6 +50,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - microservice_net
 
 volumes:
   postgres_data:
