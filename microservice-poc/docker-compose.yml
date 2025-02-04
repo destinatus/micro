@@ -4,6 +4,7 @@ services:
       context: .
       dockerfile: Dockerfile
     environment:
+      - CONSUL_HOST=consul
       - POSTGRES_HOST=postgres-users-${INSTANCE_ID:-1}
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
@@ -19,6 +20,7 @@ services:
       - /usr/src/app/node_modules
     restart: unless-stopped
     depends_on:
+      - consul
       - postgres-users-1
       - postgres-users-2
       - postgres-users-3
