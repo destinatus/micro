@@ -1,93 +1,46 @@
+version: '3.8'
+
 services:
   users-service:
     build:
       context: .
       dockerfile: Dockerfile
     environment:
-      - CONSUL_HOST=consul
-      - POSTGRES_HOST=postgres-users-${INSTANCE_ID:-1}
+      - POSTGRES_HOST=postgres
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=users_service_${INSTANCE_ID:-1}
-      - NODE_ENV=production
-      - INSTANCE_ID=${INSTANCE_ID:-1}
-    hostname: "users-service-${INSTANCE_ID:-1}"
-    deploy:
-      mode: replicated
-      replicas: 3
+      - POSTGRES_DB=users
+      - NODE_ENV=development
+    ports:
+      - "3000:3000"
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules
-    restart: unless-stopped
     depends_on:
-      - consul
-      - postgres-users-1
-      - postgres-users-2
-      - postgres-users-3
+      - postgres
     healthcheck:
       test: ["CMD-SHELL", "ps aux | grep node | grep -v grep || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 15s
-    networks:
-      - microservice_net
 
-  postgres-users-1: &postgres-base
-    image: postgres:14
+  postgres:
+    image: postgres:15
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=users_service_1
-      - POSTGRES_MAX_CONNECTIONS=200
+      - POSTGRES_DB=users
+    ports:
+      - "5432:5432"
     volumes:
-      - postgres_data_users_1:/var/lib/postgresql/data
-    command: 
-      - "postgres"
-      - "-c"
-      - "max_connections=200"
-      - "-c"
-      - "shared_buffers=256MB"
-      - "-c"
-      - "wal_level=logical"
-      - "-c"
-      - "max_wal_senders=10"
-      - "-c"
-      - "max_replication_slots=10"
-    restart: unless-stopped
+      - postgres_data:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       timeout: 5s
       retries: 5
-    networks:
-      - microservice_net
 
-  postgres-users-2:
-    <<: *postgres-base
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=users_service_2
-      - POSTGRES_MAX_CONNECTIONS=200
-    volumes:
-      - postgres_data_users_2:/var/lib/postgresql/data
-
-  postgres-users-3:
-    <<: *postgres-base
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=users_service_3
-      - POSTGRES_MAX_CONNECTIONS=200
-    volumes:
-      - postgres_data_users_3:/var/lib/postgresql/data
-
-networks:
-  microservice_net:
-    external: true
-    
 volumes:
-  postgres_data_users_1:
-  postgres_data_users_2:
-  postgres_data_users_3:
+  postgres_data:
