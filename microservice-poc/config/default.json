@@ -1,6 +1,6 @@
 {
-  "server": {
-    "port": 3001
+  "microservice": {
+    "instanceId": "1"
   },
   "gateway": {
     "port": 3002

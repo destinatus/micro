@@ -27,19 +27,10 @@ export class SyncService implements OnModuleInit, OnModuleDestroy {
     @Inject(EventEmitter2) private readonly eventEmitter: TypedEventEmitter,
     private readonly configService: ConfigService,
   ) {
-    this.instanceId = this.configService.get<string>('server.instanceId', '1');
-
-    const microservicePort = this.configService.get<number>(
-      'microservice.port',
-      3001,
-    );
+    this.instanceId = this.configService.get<string>('microservice.instanceId') ?? '1';
 
     this.client = ClientProxyFactory.create({
       transport: Transport.TCP,
-      options: {
-        host: '0.0.0.0', // Bind to all interfaces for incoming connections
-        port: microservicePort,
-      },
     });
   }
 
