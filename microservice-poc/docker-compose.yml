@@ -1,5 +1,9 @@
 version: '3.8'
 
+networks:
+  microservice_net:
+    external: true
+
 services:
   users-service:
     build:
@@ -11,6 +15,12 @@ services:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=users
       - NODE_ENV=development
+      - CONSUL_HOST=consul
+      - CONSUL_PORT=8500
+      - CONSUL_SERVICE_NAME=users-service
+      - CONSUL_SERVICE_ID=users-service-1
+    networks:
+      - microservice_net
     depends_on:
       postgres:
         condition: service_healthy

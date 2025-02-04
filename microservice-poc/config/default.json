@@ -1,12 +1,16 @@
 {
   "microservice": {
-    "instanceId": "1"
+    "instanceId": "1",
+    "host": "users-service"
+  },
+  "consul": {
+    "host": "consul",
+    "port": 8500,
+    "serviceName": "users-service",
+    "serviceId": "users-service-1"
   },
   "gateway": {
     "port": 3002
-  },
-  "users": {
-    "port": 3003
   },
   "database": {
     "postgres": {

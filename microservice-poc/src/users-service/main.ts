@@ -1,19 +1,12 @@
 import { NestFactory } from '@nestjs/core';
-import { Transport, MicroserviceOptions } from '@nestjs/microservices';
 import { UsersServiceModule } from './users.module';
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 async function bootstrap() {
-  const configService = new ConfigService();
-  const app = await NestFactory.createMicroservice<MicroserviceOptions>(
-    UsersServiceModule,
-    {
-      transport: Transport.TCP,
-    },
-  );
-
-  await app.listen();
+  const app = await NestFactory.create(UsersServiceModule);
+  const configService = app.get(ConfigService);
+  await app.init();
 
   const logger = new Logger('Users');
   const instanceId = configService.get<string>('microservice.instanceId');
