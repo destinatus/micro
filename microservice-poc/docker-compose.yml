@@ -5,13 +5,14 @@ services:
       dockerfile: Dockerfile
     environment:
       - POSTGRES_HOST=postgres-users-${INSTANCE_ID:-1}
-      - POSTGRES_PORT=5432
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=users_service_${INSTANCE_ID:-1}
       - NODE_ENV=production
       - INSTANCE_ID=${INSTANCE_ID:-1}
     hostname: "users-service-${INSTANCE_ID:-1}"
+    ports:
+      - "${PORT:-3001}:3001"
     deploy:
       mode: replicated
       replicas: 3
@@ -20,10 +21,11 @@ services:
       - /usr/src/app/node_modules
     restart: unless-stopped
     depends_on:
-      postgres-users-${INSTANCE_ID:-1}:
-        condition: service_healthy
+      - postgres-users-1
+      - postgres-users-2
+      - postgres-users-3
     healthcheck:
-      test: ["CMD-SHELL", "nc -z localhost 8080"]
+      test: ["CMD-SHELL", "ps aux | grep node | grep -v grep || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -31,15 +33,15 @@ services:
     networks:
       - microservice_net
 
-  postgres-users-${INSTANCE_ID:-1}:
+  postgres-users-1: &postgres-base
     image: postgres:14
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=users_service_${INSTANCE_ID:-1}
+      - POSTGRES_DB=users_service_1
       - POSTGRES_MAX_CONNECTIONS=200
     volumes:
-      - postgres_data_users_${INSTANCE_ID:-1}:/var/lib/postgresql/data
+      - postgres_data_users_1:/var/lib/postgresql/data
     command: 
       - "postgres"
       - "-c"
@@ -61,9 +63,29 @@ services:
     networks:
       - microservice_net
 
+  postgres-users-2:
+    <<: *postgres-base
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=users_service_2
+      - POSTGRES_MAX_CONNECTIONS=200
+    volumes:
+      - postgres_data_users_2:/var/lib/postgresql/data
+
+  postgres-users-3:
+    <<: *postgres-base
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=users_service_3
+      - POSTGRES_MAX_CONNECTIONS=200
+    volumes:
+      - postgres_data_users_3:/var/lib/postgresql/data
+
 networks:
   microservice_net:
-    driver: bridge
+    external: true
     
 volumes:
   postgres_data_users_1:
