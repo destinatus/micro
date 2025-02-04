@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Put, Delete, Param, Body, Inject, OnModuleInit } from '@nestjs/common';
-import { ClientProxy, Transport, ClientProxyFactory } from '@nestjs/microservices';
+import { ClientProxy, Transport, ClientProxyFactory, MessagePattern } from '@nestjs/microservices';
 import { ConfigService } from '@nestjs/config';
 import { DatabaseService } from '../database/database.service';
 import { User, UpdateUserResult } from '../types/user.type';
@@ -40,6 +40,7 @@ export class UsersController implements OnModuleInit {
   }
 
   @Post()
+  @MessagePattern({ cmd: 'createUser' })
   async createUser(@Body() createUserDto: CreateUserDto): Promise<User> {
     const result = await this.dbService.createUser(
       createUserDto.username,
@@ -57,11 +58,13 @@ export class UsersController implements OnModuleInit {
   }
 
   @Get(':id')
+  @MessagePattern({ cmd: 'getUser' })
   async getUser(@Param('id') id: string): Promise<User | null> {
     return this.dbService.getUser(Number(id));
   }
 
   @Put(':id')
+  @MessagePattern({ cmd: 'updateUser' })
   async updateUser(
     @Param('id') id: string,
     @Body() updateUserDto: UpdateUserDto,
@@ -80,6 +83,7 @@ export class UsersController implements OnModuleInit {
   }
 
   @Delete(':id')
+  @MessagePattern({ cmd: 'deleteUser' })
   async deleteUser(@Param('id') id: string): Promise<void> {
     await this.dbService.deleteUser(Number(id));
 
@@ -92,11 +96,13 @@ export class UsersController implements OnModuleInit {
   }
 
   @Get()
+  @MessagePattern({ cmd: 'getUnsynced' })
   async getUnsynced(): Promise<User[]> {
     return this.dbService.getUnsynced();
   }
 
   @Post(':id/sync')
+  @MessagePattern({ cmd: 'markSynced' })
   async markSynced(@Param('id') id: string): Promise<void> {
     await this.dbService.markSynced(Number(id));
 
