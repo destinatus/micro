@@ -3,27 +3,24 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    deploy:
-      replicas: 3
     environment:
-      - POSTGRES_HOST=postgres-users-{{.Task.Slot}}
+      - POSTGRES_HOST=postgres-users
       - POSTGRES_PORT=5432
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=users_service_{{.Task.Slot}}
+      - POSTGRES_DB=users_service
       - NODE_ENV=production
       - CONSUL_HOST=consul
       - CONSUL_PORT=8500
       - MICROSERVICE_HOST=0.0.0.0
       - MICROSERVICE_PORT=3001
-      - REPLICA_ID={{.Task.Slot}}
-    hostname: "users-service-{{.Task.Slot}}"
+    hostname: "users-service"
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules
     restart: unless-stopped
     depends_on:
-      postgres-users-{{.Task.Slot}}:
+      postgres-users:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "nc -z localhost 3001"]
@@ -34,15 +31,15 @@ services:
     networks:
       - microservice_net
 
-  postgres-users-{{.Task.Slot}}:
+  postgres-users:
     image: postgres:14
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=users_service_{{.Task.Slot}}
+      - POSTGRES_DB=users_service
       - POSTGRES_MAX_CONNECTIONS=200
     volumes:
-      - postgres_data_users_{{.Task.Slot}}:/var/lib/postgresql/data
+      - postgres_data_users:/var/lib/postgresql/data
     command: 
       - "postgres"
       - "-c"
@@ -69,4 +66,4 @@ networks:
     driver: bridge
     
 volumes:
-  postgres_data_users_{{.Task.Slot}}:
+  postgres_data_users:
