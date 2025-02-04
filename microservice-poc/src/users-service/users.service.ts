@@ -1,33 +1,44 @@
 import { Injectable } from '@nestjs/common';
+import { MessagePattern } from '@nestjs/microservices';
 import { DatabaseService } from '../database/database.service';
-import { User, UpdateUserResult } from '../types/user.type';
-import { CreateUserDto } from '../users/dto/create-user.dto';
-import { UpdateUserDto } from '../users/dto/update-user.dto';
+import { CreateUserResult, UpdateUserResult } from '../types/user.type';
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly dbService: DatabaseService) {}
+  constructor(private readonly databaseService: DatabaseService) {}
 
-  async createUser(createUserDto: CreateUserDto): Promise<User> {
-    return this.dbService.createUser(
-      createUserDto.username,
-      createUserDto.email,
-    );
+  @MessagePattern({ cmd: 'createUser' })
+  async createUser(data: { username: string; email: string }): Promise<CreateUserResult> {
+    return this.databaseService.createUser(data.username, data.email);
   }
 
-  async getUser(id: number): Promise<User | null> {
-    return this.dbService.getUser(id);
+  @MessagePattern({ cmd: 'updateUser' })
+  async updateUser(data: { id: number; username?: string; email?: string }): Promise<UpdateUserResult> {
+    return this.databaseService.updateUser(data.id, data.username, data.email);
   }
 
-  async updateUser(
-    id: number,
-    updateUserDto: UpdateUserDto,
-  ): Promise<UpdateUserResult | null> {
-    const { username, email } = updateUserDto;
-    return this.dbService.updateUser(id, username, email);
+  @MessagePattern({ cmd: 'getUser' })
+  async getUser(id: number): Promise<CreateUserResult | null> {
+    return this.databaseService.getUser(id);
   }
 
-  async getUnsynced(): Promise<User[]> {
-    return this.dbService.getUnsynced();
+  @MessagePattern({ cmd: 'getAllUsers' })
+  async getAllUsers(): Promise<CreateUserResult[]> {
+    return this.databaseService.getAllUsers();
+  }
+
+  @MessagePattern({ cmd: 'deleteUser' })
+  async deleteUser(id: number): Promise<void> {
+    return this.databaseService.deleteUser(id);
+  }
+
+  @MessagePattern({ cmd: 'getUnsynced' })
+  async getUnsynced(): Promise<CreateUserResult[]> {
+    return this.databaseService.getUnsynced();
+  }
+
+  @MessagePattern({ cmd: 'markSynced' })
+  async markSynced(id: number): Promise<void> {
+    return this.databaseService.markSynced(id);
   }
 }

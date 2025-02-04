@@ -1,17 +1,32 @@
 import { Controller, Get } from '@nestjs/common';
-import { HealthCheck, HealthCheckService } from '@nestjs/terminus';
-import { DatabaseHealthIndicator } from './database.health';
+import { DatabaseService } from '../database/database.service';
 
 @Controller('health')
 export class HealthController {
-  constructor(
-    private health: HealthCheckService,
-    private db: DatabaseHealthIndicator,
-  ) {}
+  constructor(private readonly db: DatabaseService) {}
 
   @Get()
-  @HealthCheck()
-  check() {
-    return this.health.check([() => this.db.isHealthy('database')]);
+  async check() {
+    try {
+      await this.db.getAllUsers();
+      return {
+        status: 'ok',
+        details: {
+          database: {
+            status: 'up'
+          }
+        }
+      };
+    } catch (error) {
+      return {
+        status: 'error',
+        details: {
+          database: {
+            status: 'down',
+            error: error.message
+          }
+        }
+      };
+    }
   }
 }

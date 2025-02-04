@@ -1,4 +1,16 @@
-FROM node:18-alpine
+FROM node:18-bullseye
+
+# Install PostgreSQL
+RUN apt-get update && apt-get install -y postgresql postgresql-contrib && apt-get clean
+
+# Initialize PostgreSQL data directory
+USER postgres
+RUN /etc/init.d/postgresql start && \
+    psql --command "ALTER USER postgres WITH PASSWORD 'postgres';" && \
+    createdb microservice_poc
+
+# Switch back to root to continue with Node.js setup
+USER root
 
 WORKDIR /usr/src/app
 
@@ -14,16 +26,11 @@ COPY . .
 # Build the application
 RUN npm run build
 
-# Install required packages
-RUN apk --no-cache add curl netcat-openbsd dos2unix
+# Copy init script
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-# Ensure wait-for-it.sh has proper line endings and permissions
-RUN dos2unix wait-for-it.sh && \
-    chmod +x wait-for-it.sh && \
-    mv wait-for-it.sh /usr/local/bin/
-
-# Expose port
 EXPOSE 3000
 
-# Start the application with wait-for-it
-CMD ["/bin/sh", "-c", "/usr/local/bin/wait-for-it.sh postgres:5432 -- npm run start:prod"]
+# Start PostgreSQL and the application
+CMD ["/usr/local/bin/docker-entrypoint.sh"]
