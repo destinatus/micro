@@ -1,0 +1,12 @@
+service:
+  name: api-gateway
+  port: 3000
+
+consul:
+  host: localhost
+  port: 8500
+  discoveryHost: localhost
+  healthCheck:
+    timeout: 5s
+    interval: 10s
+    route: /health
