@@ -1,56 +1,57 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern } from '@nestjs/microservices';
-import { User, UpdateUserResult } from '../types/user.type';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { CreateUserResult, UpdateUserResult } from '../types/user.type';
 import { UsersService } from '../users-service/users.service';
+import {
+  UserMessagePattern,
+  CreateUserRequest,
+  UpdateUserRequest,
+  GetUserRequest,
+  DeleteUserRequest,
+  MarkSyncedRequest,
+} from '../types/message-patterns.type';
 
 @Controller()
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @MessagePattern({ cmd: 'createUser' })
-  async createUser(createUserDto: CreateUserDto): Promise<User> {
-    return this.usersService.createUser(
-      createUserDto.username,
-      createUserDto.email,
-    );
+  @MessagePattern(UserMessagePattern.CREATE)
+  async createUser(data: CreateUserRequest): Promise<CreateUserResult> {
+    const { username, email } = data;
+    return this.usersService.createUser(username, email);
   }
 
-  @MessagePattern({ cmd: 'getUser' })
-  async getUser(id: number): Promise<User | null> {
+  @MessagePattern(UserMessagePattern.GET_ONE)
+  async getUser(data: GetUserRequest): Promise<CreateUserResult | null> {
+    const { id } = data;
     return this.usersService.getUser(id);
   }
 
-  @MessagePattern({ cmd: 'getAllUsers' })
-  async getAllUsers(): Promise<User[]> {
+  @MessagePattern(UserMessagePattern.GET_ALL)
+  async getAllUsers(): Promise<CreateUserResult[]> {
     return this.usersService.getAllUsers();
   }
 
-  @MessagePattern({ cmd: 'updateUser' })
-  async updateUser(data: {
-    id: number;
-    updateUserDto: UpdateUserDto;
-  }): Promise<UpdateUserResult | null> {
-    const {
-      id,
-      updateUserDto: { username, email },
-    } = data;
+  @MessagePattern(UserMessagePattern.UPDATE)
+  async updateUser(data: UpdateUserRequest): Promise<UpdateUserResult | null> {
+    const { id, username, email } = data;
     return this.usersService.updateUser(id, username, email);
   }
 
-  @MessagePattern({ cmd: 'deleteUser' })
-  async deleteUser(id: number): Promise<void> {
+  @MessagePattern(UserMessagePattern.DELETE)
+  async deleteUser(data: DeleteUserRequest): Promise<void> {
+    const { id } = data;
     await this.usersService.deleteUser(id);
   }
 
-  @MessagePattern({ cmd: 'getUnsynced' })
-  async getUnsynced(): Promise<User[]> {
+  @MessagePattern(UserMessagePattern.GET_UNSYNCED)
+  async getUnsynced(): Promise<CreateUserResult[]> {
     return this.usersService.getUnsynced();
   }
 
-  @MessagePattern({ cmd: 'markSynced' })
-  async markSynced(id: number): Promise<void> {
+  @MessagePattern(UserMessagePattern.MARK_SYNCED)
+  async markSynced(data: MarkSyncedRequest): Promise<void> {
+    const { id } = data;
     await this.usersService.markSynced(id);
   }
 }

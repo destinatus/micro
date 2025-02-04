@@ -4,26 +4,26 @@ services:
       context: .
       dockerfile: Dockerfile
     environment:
-      - POSTGRES_HOST=postgres-users
+      - POSTGRES_HOST=postgres-users-${INSTANCE_ID:-1}
       - POSTGRES_PORT=5432
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=users_service
+      - POSTGRES_DB=users_service_${INSTANCE_ID:-1}
       - NODE_ENV=production
-      - CONSUL_HOST=consul
-      - CONSUL_PORT=8500
-      - MICROSERVICE_HOST=0.0.0.0
-      - MICROSERVICE_PORT=3001
-    hostname: "users-service"
+      - INSTANCE_ID=${INSTANCE_ID:-1}
+    hostname: "users-service-${INSTANCE_ID:-1}"
+    deploy:
+      mode: replicated
+      replicas: 3
     volumes:
       - .:/usr/src/app
       - /usr/src/app/node_modules
     restart: unless-stopped
     depends_on:
-      postgres-users:
+      postgres-users-${INSTANCE_ID:-1}:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "nc -z localhost 3001"]
+      test: ["CMD-SHELL", "nc -z localhost 8080"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -31,15 +31,15 @@ services:
     networks:
       - microservice_net
 
-  postgres-users:
+  postgres-users-${INSTANCE_ID:-1}:
     image: postgres:14
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=users_service
+      - POSTGRES_DB=users_service_${INSTANCE_ID:-1}
       - POSTGRES_MAX_CONNECTIONS=200
     volumes:
-      - postgres_data_users:/var/lib/postgresql/data
+      - postgres_data_users_${INSTANCE_ID:-1}:/var/lib/postgresql/data
     command: 
       - "postgres"
       - "-c"
@@ -66,4 +66,6 @@ networks:
     driver: bridge
     
 volumes:
-  postgres_data_users:
+  postgres_data_users_1:
+  postgres_data_users_2:
+  postgres_data_users_3:

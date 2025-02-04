@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
@@ -92,7 +93,9 @@ function createDbError(
   return Object.assign(new DatabaseError(message), metadata);
 }
 
-function validateQueryResult<T extends QueryResultRow>(result: unknown): TypedQueryResult<T> {
+function validateQueryResult<T extends QueryResultRow>(
+  result: unknown,
+): TypedQueryResult<T> {
   const metadata: DbErrorMetadata = {
     code: 'VALIDATION_ERROR',
     context: 'QueryResult',
