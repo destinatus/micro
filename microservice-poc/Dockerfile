@@ -1,16 +1,10 @@
 FROM node:18-bullseye
 
-# Install PostgreSQL
-RUN apt-get update && apt-get install -y postgresql postgresql-contrib && apt-get clean
-
-# Initialize PostgreSQL data directory
-USER postgres
-RUN /etc/init.d/postgresql start && \
-    psql --command "ALTER USER postgres WITH PASSWORD 'postgres';" && \
-    createdb microservice_poc
-
-# Switch back to root to continue with Node.js setup
-USER root
+# Install PostgreSQL client tools only
+RUN apt-get update && \
+    apt-get install -y postgresql-client && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /usr/src/app
 
@@ -26,11 +20,11 @@ COPY . .
 # Build the application
 RUN npm run build
 
-# Copy init script
+# Copy and make entrypoint script executable
 COPY docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-EXPOSE 3000
+EXPOSE 3001
 
-# Start PostgreSQL and the application
-CMD ["/usr/local/bin/docker-entrypoint.sh"]
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+CMD ["node", "dist/src/users-service/main"]
