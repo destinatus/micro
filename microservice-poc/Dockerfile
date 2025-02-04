@@ -18,7 +18,7 @@ RUN npm ci
 COPY . .
 
 # Build the application
-RUN npm run build
+RUN npx nest build --config nest-cli.users.json
 
 # Copy and make entrypoint script executable
 COPY docker-entrypoint.sh /usr/local/bin/
