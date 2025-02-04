@@ -26,7 +26,7 @@ services:
       postgres-users-{{.Task.Slot}}:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:3000/health"]
+      test: ["CMD-SHELL", "nc -z localhost 3001"]
       interval: 10s
       timeout: 5s
       retries: 5
