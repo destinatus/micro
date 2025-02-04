@@ -1,17 +1,17 @@
 import { Controller } from '@nestjs/common';
 import { MessagePattern } from '@nestjs/microservices';
-import { DatabaseService } from '../database/database.service';
 import { User, UpdateUserResult } from '../types/user.type';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UsersService } from '../users-service/users.service';
 
 @Controller()
 export class UsersController {
-  constructor(private readonly dbService: DatabaseService) {}
+  constructor(private readonly usersService: UsersService) {}
 
   @MessagePattern({ cmd: 'createUser' })
   async createUser(createUserDto: CreateUserDto): Promise<User> {
-    return this.dbService.createUser(
+    return this.usersService.createUser(
       createUserDto.username,
       createUserDto.email,
     );
@@ -19,7 +19,12 @@ export class UsersController {
 
   @MessagePattern({ cmd: 'getUser' })
   async getUser(id: number): Promise<User | null> {
-    return this.dbService.getUser(id);
+    return this.usersService.getUser(id);
+  }
+
+  @MessagePattern({ cmd: 'getAllUsers' })
+  async getAllUsers(): Promise<User[]> {
+    return this.usersService.getAllUsers();
   }
 
   @MessagePattern({ cmd: 'updateUser' })
@@ -31,21 +36,21 @@ export class UsersController {
       id,
       updateUserDto: { username, email },
     } = data;
-    return this.dbService.updateUser(id, username, email);
+    return this.usersService.updateUser(id, username, email);
   }
 
   @MessagePattern({ cmd: 'deleteUser' })
   async deleteUser(id: number): Promise<void> {
-    await this.dbService.deleteUser(id);
+    await this.usersService.deleteUser(id);
   }
 
   @MessagePattern({ cmd: 'getUnsynced' })
   async getUnsynced(): Promise<User[]> {
-    return this.dbService.getUnsynced();
+    return this.usersService.getUnsynced();
   }
 
   @MessagePattern({ cmd: 'markSynced' })
   async markSynced(id: number): Promise<void> {
-    await this.dbService.markSynced(id);
+    await this.usersService.markSynced(id);
   }
 }
