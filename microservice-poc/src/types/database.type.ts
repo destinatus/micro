@@ -1,6 +1,12 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { Client, ClientConfig, Notification, QueryResult } from 'pg';
+import {
+  Client,
+  ClientConfig,
+  Notification,
+  QueryResult,
+  QueryResultRow,
+} from 'pg';
 
 /**
  * Custom error class for database-related errors
@@ -26,7 +32,8 @@ export interface TypedClientConfig
   idleTimeoutMillis?: number;
 }
 
-export interface TypedQueryResult<T> extends QueryResult<T> {
+export interface TypedQueryResult<T extends QueryResultRow>
+  extends QueryResult<T> {
   rows: T[];
   rowCount: number;
 }
@@ -38,7 +45,7 @@ export interface TypedNotification extends Notification {
 
 export interface TypedClient extends Omit<Client, 'query' | 'on'> {
   connect(): Promise<void>;
-  query<T = unknown>(
+  query<T extends QueryResultRow = QueryResultRow>(
     queryText: string,
     values?: unknown[],
   ): Promise<TypedQueryResult<T>>;
@@ -85,7 +92,7 @@ function createDbError(
   return Object.assign(new DatabaseError(message), metadata);
 }
 
-function validateQueryResult<T>(result: unknown): TypedQueryResult<T> {
+function validateQueryResult<T extends QueryResultRow>(result: unknown): TypedQueryResult<T> {
   const metadata: DbErrorMetadata = {
     code: 'VALIDATION_ERROR',
     context: 'QueryResult',
@@ -110,7 +117,7 @@ function validateQueryResult<T>(result: unknown): TypedQueryResult<T> {
   });
 
   // Ensure rowCount is a number
-  const rowCount = Number.isInteger(result.rowCount) ? result.rowCount : 0;
+  const rowCount = result.rowCount ?? 0;
 
   return {
     ...result,
@@ -119,7 +126,7 @@ function validateQueryResult<T>(result: unknown): TypedQueryResult<T> {
   };
 }
 
-export type QueryHandler<T> = (
+export type QueryHandler<T extends QueryResultRow> = (
   queryText: string,
   values?: unknown[],
 ) => Promise<TypedQueryResult<T>>;
@@ -129,11 +136,11 @@ export type MethodHandler<T> = (...args: unknown[]) => Promise<T>;
 /**
  * Creates a query handler that wraps the underlying query method.
  */
-function createQueryHandler(target: SafeClient): QueryHandler<unknown> {
-  return async <T = unknown>(
+function createQueryHandler(target: SafeClient): QueryHandler<QueryResultRow> {
+  return async function <T extends QueryResultRow = QueryResultRow>(
     queryText: string,
     values?: unknown[],
-  ): Promise<TypedQueryResult<T>> => {
+  ): Promise<TypedQueryResult<T>> {
     try {
       const queryResult: any = await target.query(queryText, values);
       return validateQueryResult<T>(queryResult);
