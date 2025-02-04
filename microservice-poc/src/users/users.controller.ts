@@ -18,13 +18,16 @@ export class UsersController {
   @MessagePattern(UserMessagePattern.CREATE)
   async createUser(data: CreateUserRequest): Promise<CreateUserResult> {
     const { username, email } = data;
-    return this.usersService.createUser(username, email);
+    return this.usersService.createUser({
+      username: username,
+      email: email,
+    });
   }
 
   @MessagePattern(UserMessagePattern.GET_ONE)
   async getUser(data: GetUserRequest): Promise<CreateUserResult | null> {
     const { id } = data;
-    return this.usersService.getUser(id);
+    return this.usersService.getUser({ id: id });
   }
 
   @MessagePattern(UserMessagePattern.GET_ALL)
@@ -35,13 +38,17 @@ export class UsersController {
   @MessagePattern(UserMessagePattern.UPDATE)
   async updateUser(data: UpdateUserRequest): Promise<UpdateUserResult | null> {
     const { id, username, email } = data;
-    return this.usersService.updateUser(id, username, email);
+    return this.usersService.updateUser({
+      id: id,
+      username: username,
+      email: email,
+    });
   }
 
   @MessagePattern(UserMessagePattern.DELETE)
   async deleteUser(data: DeleteUserRequest): Promise<void> {
     const { id } = data;
-    await this.usersService.deleteUser(id);
+    await this.usersService.deleteUser({ id: id });
   }
 
   @MessagePattern(UserMessagePattern.GET_UNSYNCED)
@@ -52,6 +59,6 @@ export class UsersController {
   @MessagePattern(UserMessagePattern.MARK_SYNCED)
   async markSynced(data: MarkSyncedRequest): Promise<void> {
     const { id } = data;
-    await this.usersService.markSynced(id);
+    await this.usersService.markSynced({ id: id });
   }
 }

@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 export interface DatabaseConfig {
   host: string;
   port: number;
@@ -6,7 +7,7 @@ export interface DatabaseConfig {
   database: string;
 }
 
- import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from 'uuid';
 
 export interface Config {
   gateway: {
@@ -20,6 +21,7 @@ export interface Config {
   };
   microservice: {
     host: string;
+    instanceId: string;
   };
   consul: {
     host: string;
@@ -51,6 +53,7 @@ export default (): Config => ({
   },
   microservice: {
     host: process.env.HOSTNAME ?? 'localhost',
+    instanceId: process.env.INSTANCE_ID || '1',
   },
   consul: {
     host: process.env.CONSUL_HOST || 'localhost',

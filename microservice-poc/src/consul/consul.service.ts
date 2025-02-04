@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Consul from 'consul';
@@ -6,11 +7,9 @@ interface IServiceRegistration {
   id: string;
   name: string;
   address: string;
-  port: number;
   tags: string[];
   check: {
     name: string;
-    http: string;
     interval: string;
     timeout: string;
   };
@@ -74,35 +73,26 @@ export class ConsulService implements OnModuleInit, OnModuleDestroy {
 
   private async registerService() {
     const serviceName = this.configService.get<string>('consul.serviceName');
-    const servicePort = this.configService.get<number>('server.port');
-    const microservicePort =
-      this.configService.get<number>('microservice.port');
-    const microserviceHost =
-      this.configService.get<string>('microservice.host');
+    const instanceId = this.configService.get<string>('microservice.instanceId');
+    const serviceHost = this.configService.get<string>('microservice.host');
 
-    if (
-      !serviceName ||
-      !servicePort ||
-      !microservicePort ||
-      !microserviceHost
-    ) {
+    if (!serviceName || !instanceId || !serviceHost) {
       throw new Error('Required service configuration is missing');
     }
 
     const registration: IServiceRegistration = {
       id: this.serviceId,
       name: serviceName,
-      address: microserviceHost,
-      port: servicePort,
-      tags: ['api', 'microservice'],
+      address: serviceHost,
+      tags: ['microservice'],
       check: {
         name: `${serviceName} health check`,
-        http: `http://${microserviceHost}:${servicePort}/health`,
         interval: '10s',
         timeout: '5s',
       },
       meta: {
-        microservicePort: microservicePort.toString(),
+        instanceId,
+        serviceName,
       },
     };
 

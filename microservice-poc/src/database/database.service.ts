@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import {
   Injectable,
   OnModuleInit,
@@ -15,7 +16,6 @@ import {
 import {
   TypedClient,
   TypedClientConfig,
-  TypedQueryResult,
   TypedNotification,
   createTypedClient,
 } from '../types/database.type';
@@ -33,10 +33,10 @@ interface PostgresPoolConfig {
 }
 
 interface TypedPool extends Omit<Pool, 'query' | 'connect'> {
-  query<T = unknown>(
+  query(
     queryText: string,
     values?: unknown[],
-  ): Promise<TypedQueryResult<T>>;
+  ): Promise<any>;
   connect(): Promise<TypedClient>;
 }
 
@@ -247,7 +247,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
 
   async createUser(username: string, email: string): Promise<CreateUserResult> {
     try {
-      const result = await this.pool.query<CreateUserResult>(
+      const result = await this.pool.query(
         `INSERT INTO users (username, email, last_modified_by)
          VALUES ($1, $2, $3)
          RETURNING id, username, email, needs_sync, created_at, updated_at, last_synced_at, version, last_modified_by`,
@@ -345,7 +345,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
 
   async getUser(id: number): Promise<CreateUserResult | null> {
     try {
-      const result = await this.pool.query<CreateUserResult>(
+      const result = await this.pool.query(
         `SELECT id, username, email, needs_sync, created_at, updated_at, last_synced_at, version, last_modified_by
          FROM users
          WHERE id = $1`,
@@ -360,7 +360,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
 
   async getAllUsers(): Promise<CreateUserResult[]> {
     try {
-      const result = await this.pool.query<CreateUserResult>(
+      const result = await this.pool.query(
         `SELECT id, username, email, needs_sync, created_at, updated_at, last_synced_at, version, last_modified_by
          FROM users
          ORDER BY created_at DESC`,
@@ -372,9 +372,9 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  async getUnsynced(): Promise<CreateUserResult[]> {
+  async getUnsynced() {
     try {
-      const result = await this.pool.query<CreateUserResult>(
+      const result = await this.pool.query(
         `SELECT id, username, email, needs_sync, created_at, updated_at, last_synced_at, version, last_modified_by
          FROM users
          WHERE needs_sync = true
@@ -389,9 +389,9 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  async markSynced(id: number): Promise<void> {
+  async markSynced(id: number){
     try {
-      const result = await this.pool.query<{ rowCount: number }>(
+      const result = await this.pool.query(
         `UPDATE users
          SET needs_sync = false, last_synced_at = CURRENT_TIMESTAMP
          WHERE id = $1`,

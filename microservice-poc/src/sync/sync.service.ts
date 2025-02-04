@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import {
   Injectable,
   OnModuleDestroy,
@@ -27,7 +28,8 @@ export class SyncService implements OnModuleInit, OnModuleDestroy {
     @Inject(EventEmitter2) private readonly eventEmitter: TypedEventEmitter,
     private readonly configService: ConfigService,
   ) {
-    this.instanceId = this.configService.get<string>('microservice.instanceId') ?? '1';
+    this.instanceId =
+      this.configService.get<string>('microservice.instanceId') ?? '1';
 
     this.client = ClientProxyFactory.create({
       transport: Transport.TCP,

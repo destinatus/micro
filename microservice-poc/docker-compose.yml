@@ -11,8 +11,6 @@ services:
       - NODE_ENV=production
       - INSTANCE_ID=${INSTANCE_ID:-1}
     hostname: "users-service-${INSTANCE_ID:-1}"
-    ports:
-      - "${PORT:-3001}:3001"
     deploy:
       mode: replicated
       replicas: 3
