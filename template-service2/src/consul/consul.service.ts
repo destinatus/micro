@@ -45,7 +45,7 @@ export class ConsulService implements OnModuleInit, OnModuleDestroy {
       port,
       check: {
         name: 'HTTP Health Check',
-        http: `http://template-service:${port}/health`,
+        http: `http://localhost:${port}/health`, // Use localhost for self health check
         interval: '10s',
         timeout: '5s',
         status: 'passing',
