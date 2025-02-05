@@ -1,115 +1,103 @@
 import {
-  All,
   Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Body,
+  Param,
   HttpException,
   HttpStatus,
   Logger,
-  Param,
-  Req,
+  Inject,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { Request } from 'express';
+import { ClientProxy } from '@nestjs/microservices';
 import { ConsulService } from '../consul/consul.service';
-import * as http from 'http';
-import { IncomingMessage, ServerResponse } from 'http';
+import { firstValueFrom } from 'rxjs';
 
-@Controller()
+@Controller('template-service')
 export class GatewayController {
   private readonly logger = new Logger(GatewayController.name);
 
   constructor(
     private readonly consulService: ConsulService,
-    private readonly configService: ConfigService,
+    @Inject('TEMPLATE_SERVICE') private readonly client: ClientProxy,
   ) {}
 
-  @All(':service/*')
-  async proxy(@Param('service') service: string, @Req() req: Request) {
-    this.logger.debug(
-      `Incoming request for service: ${service}, path: ${req.path}`,
-    );
-
+  @Get('users')
+  async findAllUsers() {
     try {
-      const serviceInstance = await this.consulService.getService(service);
-      const targetPath = req.path.replace(new RegExp(`^/${service}`), '');
-      const target = {
-        hostname: serviceInstance.address,
-        port: serviceInstance.port,
-        path:
-          targetPath +
-          (req.url.includes('?')
-            ? req.url.substring(req.url.indexOf('?'))
-            : ''),
-        method: req.method,
-        headers: {
-          ...req.headers,
-          host: `${serviceInstance.address}:${serviceInstance.port}`,
-        },
-      };
-
-      this.logger.debug(
-        `Proxying request to: http://${target.hostname}:${target.port}${target.path}`,
+      return await firstValueFrom(
+        this.client.send({ cmd: 'findAllUsers' }, {})
       );
-
-      return new Promise<void>((resolve, reject) => {
-        if (!req.res) {
-          const error = new HttpException(
-            'Response object is missing',
-            HttpStatus.INTERNAL_SERVER_ERROR,
-          );
-          this.logger.error(error.message);
-          reject(error);
-          return;
-        }
-
-        const proxyReq = http.request(target, (proxyRes: IncomingMessage) => {
-          req.res!.writeHead(proxyRes.statusCode || 500, proxyRes.headers);
-          proxyRes.pipe(req.res as ServerResponse<IncomingMessage>);
-          proxyRes.on('end', () => {
-            this.logger.debug('Successfully proxied request');
-            resolve();
-          });
-        });
-
-        proxyReq.on('error', (err: Error) => {
-          this.logger.error('Proxy error:', err.message, {
-            service,
-            target: `${target.hostname}:${target.port}`,
-          });
-          reject(
-            new HttpException(
-              'Service unavailable',
-              HttpStatus.SERVICE_UNAVAILABLE,
-            ),
-          );
-        });
-
-        if (req.body) {
-          proxyReq.write(req.body);
-        }
-        proxyReq.end();
-      });
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        if (error.message.includes('not found')) {
-          this.logger.warn(`Service not found: ${service}`);
-          throw new HttpException(
-            `Service ${service} not found`,
-            HttpStatus.NOT_FOUND,
-          );
-        }
-        if (error.message.includes('No healthy instances')) {
-          this.logger.warn(`No healthy instances for service: ${service}`);
-          throw new HttpException(
-            `No healthy instances of ${service} available`,
-            HttpStatus.SERVICE_UNAVAILABLE,
-          );
-        }
-      }
-
-      this.logger.error('Gateway error:', error);
+    } catch (error) {
+      this.logger.error('Error finding all users:', error);
       throw new HttpException(
-        'Internal server error',
-        HttpStatus.INTERNAL_SERVER_ERROR,
+        'Service unavailable',
+        HttpStatus.SERVICE_UNAVAILABLE,
+      );
+    }
+  }
+
+  @Get('users/:id')
+  async findOneUser(@Param('id') id: string) {
+    try {
+      return await firstValueFrom(
+        this.client.send({ cmd: 'findOneUser' }, id)
+      );
+    } catch (error) {
+      this.logger.error('Error finding user:', error);
+      throw new HttpException(
+        'Service unavailable',
+        HttpStatus.SERVICE_UNAVAILABLE,
+      );
+    }
+  }
+
+  @Post('users')
+  async createUser(@Body() createUserDto: any) {
+    try {
+      return await firstValueFrom(
+        this.client.send({ cmd: 'createUser' }, createUserDto)
+      );
+    } catch (error) {
+      this.logger.error('Error creating user:', error);
+      throw new HttpException(
+        'Service unavailable',
+        HttpStatus.SERVICE_UNAVAILABLE,
+      );
+    }
+  }
+
+  @Put('users/:id')
+  async updateUser(@Param('id') id: string, @Body() updateUserDto: any) {
+    try {
+      return await firstValueFrom(
+        this.client.send(
+          { cmd: 'updateUser' },
+          { id, updateUserDto }
+        )
+      );
+    } catch (error) {
+      this.logger.error('Error updating user:', error);
+      throw new HttpException(
+        'Service unavailable',
+        HttpStatus.SERVICE_UNAVAILABLE,
+      );
+    }
+  }
+
+  @Delete('users/:id')
+  async deleteUser(@Param('id') id: string) {
+    try {
+      return await firstValueFrom(
+        this.client.send({ cmd: 'deleteUser' }, id)
+      );
+    } catch (error) {
+      this.logger.error('Error deleting user:', error);
+      throw new HttpException(
+        'Service unavailable',
+        HttpStatus.SERVICE_UNAVAILABLE,
       );
     }
   }

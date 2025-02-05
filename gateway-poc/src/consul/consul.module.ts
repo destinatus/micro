@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ConsulService } from './consul.service';
-import * as Consul from 'consul';
+import Consul from "consul";
 
 @Module({
   imports: [ConfigModule],

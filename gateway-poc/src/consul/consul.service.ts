@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as os from 'os';
-import * as Consul from 'consul';
+import Consul from "consul";
 
 interface ServiceRegistration {
   id: string;
