@@ -7,9 +7,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: template-service
     ports:
-      - "3001:3001"
+      - "3001"
     environment:
       - PORT=3001
       - CONSUL_HOST=consul
