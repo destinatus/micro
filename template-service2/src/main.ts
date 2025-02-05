@@ -7,25 +7,31 @@ import { Config } from './config/configuration';
 
 async function bootstrap() {
   // Create the HTTP application (needed for health checks)
-  const app = await NestFactory.create(AppModule);
-  const configService = app.get(ConfigService);
-  const port = configService.get<Config['port']>('app.port');
+  const httpApp = await NestFactory.create(AppModule);
+  const configService = httpApp.get<ConfigService>(ConfigService);
+  const port = configService.get<number>('app.port');
+  
   const logger = new Logger('Main');
-
-  // Connect TCP transport for microservice
-  app.connectMicroservice<MicroserviceOptions>({
-    transport: Transport.TCP,
-    options: {
-      port: port,
+  
+  // Create microservice
+  const microservice = await NestFactory.createMicroservice<MicroserviceOptions>(
+    AppModule,
+    {
+      transport: Transport.TCP,
+      options: {
+        port: port
+      }
     },
-  });
+  );
 
-  // Start both HTTP and Microservice servers
-  await app.startAllMicroservices();
-  await app.listen(port);
+  // Start both applications
+  await Promise.all([
+    httpApp.listen(port),
+    microservice.listen()
+  ]);
 
-  logger.log(`🚀 HTTP server is running on: http://localhost:${port}`);
-  logger.log(`🔌 TCP Microservice is listening on port: ${port}`);
+  logger.log(`HTTP application is running on port ${port}`);
+  logger.log(`Microservice is running on port ${port}`);
 }
 
 bootstrap();
