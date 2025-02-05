@@ -6,43 +6,28 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as os from 'os';
-import { ConsulService as NestCloudConsul } from '@nestcloud/consul';
-
-interface ConsulHealthCheck {
-  Node: {
-    Address: string;
-  };
-  Service: {
-    Address: string;
-    Port: number;
-  };
-  Checks: Array<{
-    Status: string;
-  }>;
-}
+import * as Consul from 'consul';
 
 interface ConsulConfig {
   host: string;
   port: number;
 }
 
-interface RegisterOptions {
+interface ServiceRegistration {
   id: string;
   name: string;
   port: number;
   check: {
-    name: string;
     http: string;
     interval: string;
     timeout: string;
-    status: string;
-    DeregisterCriticalServiceAfter?: string;
+    deregistercriticalserviceafter: string;
   };
 }
 
 @Injectable()
 export class ConsulService implements OnModuleInit, OnModuleDestroy {
-  private consul!: NestCloudConsul;
+  private consul!: Consul.Consul;
   private readonly serviceId: string;
   private readonly logger = new Logger(ConsulService.name);
 
@@ -61,18 +46,14 @@ export class ConsulService implements OnModuleInit, OnModuleDestroy {
   private initializeConsul(): void {
     try {
       const config = this.getConsulConfig();
-      const consulOptions = {
+      this.consul = new Consul({
         host: config.host,
         port: config.port,
-      };
-
-      this.consul = new NestCloudConsul({
-        ...consulOptions,
-        name: 'api-gateway',
+        promisify: true,
       });
       
       this.logger.log(
-        `Consul client initialized with config: ${JSON.stringify(consulOptions)}`,
+        `Consul client initialized with config: ${JSON.stringify({ host: config.host, port: config.port })}`,
       );
     } catch (error) {
       const err = error instanceof Error ? error : new Error('Unknown error');
@@ -110,17 +91,15 @@ export class ConsulService implements OnModuleInit, OnModuleDestroy {
     this.validateConsul();
 
     const port = this.getServicePort();
-    const registration: RegisterOptions = {
+    const registration: ServiceRegistration = {
       id: this.serviceId,
       name: 'api-gateway',
       port,
       check: {
-        name: 'HTTP Health Check',
         http: `http://localhost:${port}/health`,
         interval: '10s',
         timeout: '5s',
-        status: 'passing',
-        DeregisterCriticalServiceAfter: '30s',
+        deregistercriticalserviceafter: '30s',
       },
     };
 
@@ -138,7 +117,7 @@ export class ConsulService implements OnModuleInit, OnModuleDestroy {
     this.validateConsul();
 
     try {
-      await this.consul.agent.service.deregister(this.serviceId);
+      await this.consul.agent.service.deregister({ id: this.serviceId });
     } catch (error: unknown) {
       const err = error as Error;
       throw new Error(`Failed to deregister service: ${err.message}`);
@@ -151,10 +130,11 @@ export class ConsulService implements OnModuleInit, OnModuleDestroy {
     this.validateConsul();
 
     try {
-      const services = await this.consul.health.service(serviceName);
-      const passingServices = (services as ConsulHealthCheck[]).filter(
-        (service) =>
-          service.Checks.every((check) => check.Status === 'passing'),
+      const result = await this.consul.health.service(serviceName);
+      const services = result as Consul.Health.Service[];
+      
+      const passingServices = services.filter((service) =>
+        service.Checks.every((check) => check.Status === 'passing'),
       );
 
       if (!passingServices || passingServices.length === 0) {

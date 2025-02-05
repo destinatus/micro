@@ -1,27 +1,9 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { ConsulModule as NestCloudConsulModule } from '@nestcloud/consul';
-import { BootModule } from '@nestcloud/boot';
+import { ConfigModule } from '@nestjs/config';
 import { ConsulService } from './consul.service';
 
 @Module({
-  imports: [
-    ConfigModule,
-    BootModule.forRoot({
-      filePath: 'config.yaml',
-    }),
-    NestCloudConsulModule.register({
-      useFactory: (configService: ConfigService) => {
-        const consulConfig = configService.get('app.consul');
-        return {
-          host: consulConfig.host,
-          port: consulConfig.port,
-          name: 'api-gateway',
-        };
-      },
-      inject: [ConfigService],
-    }),
-  ],
+  imports: [ConfigModule],
   providers: [ConsulService],
   exports: [ConsulService],
 })
