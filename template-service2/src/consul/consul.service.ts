@@ -38,7 +38,9 @@ export class ConsulService implements OnModuleInit, OnModuleDestroy {
 
   private async registerService(): Promise<void> {
     const port = this.getServicePort();
-    const containerName = 'template-service2-template-service-1';
+    const containerName = process.env.HOSTNAME || os.hostname();
+    
+    // In Docker, we want to use the container name for service discovery
     const registration = {
       id: this.serviceId,
       name: this.configService.get<Config['service']>('app.service').name,
@@ -52,6 +54,8 @@ export class ConsulService implements OnModuleInit, OnModuleDestroy {
         status: 'passing',
         deregistercriticalserviceafter: '30s',
       },
+      // Add tags to indicate this is a Docker service
+      tags: ['docker', `container-${containerName}`]
     };
 
     try {
@@ -85,7 +89,20 @@ export class ConsulService implements OnModuleInit, OnModuleDestroy {
       }
 
       const selectedService = services[Math.floor(Math.random() * services.length)];
-      const address = selectedService.Service.Address || selectedService.Service.ID.split('-')[0];
+      
+      // Log full service details for debugging
+      this.logger.debug('Service details:');
+      this.logger.debug('Object:');
+      this.logger.debug(JSON.stringify({
+        id: selectedService.Service.ID,
+        name: selectedService.Service.Service,
+        address: selectedService.Service.Address,
+        nodeAddress: selectedService.Node.Address,
+        resolvedAddress: selectedService.Service.Address || selectedService.Node.Address
+      }, null, 2));
+
+      // Use Node address if Service address is not available
+      const address = selectedService.Service.Address || selectedService.Node.Address;
       const port = selectedService.Service.Port;
 
       this.logger.debug(`Selected service instance: ${address}:${port}`);
