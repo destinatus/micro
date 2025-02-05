@@ -37,25 +37,23 @@ export class ConsulService implements OnModuleInit, OnModuleDestroy {
   }
 
   private async registerService(): Promise<void> {
+    const address = process.env.HOSTNAME || os.hostname();
     const port = this.getServicePort();
-    const containerName = process.env.HOSTNAME || os.hostname();
     
-    // In Docker, we want to use the container name for service discovery
     const registration = {
       id: this.serviceId,
       name: this.configService.get<Config['service']>('app.service').name,
-      address: containerName,
+      address: address,
       port,
       check: {
         name: 'HTTP Health Check',
-        http: `http://${containerName}:${port}/health`,
+        http: `http://${address}:${port}/health`,
         interval: '10s',
         timeout: '5s',
         status: 'passing',
         deregistercriticalserviceafter: '30s',
       },
-      // Add tags to indicate this is a Docker service
-      tags: ['docker', `container-${containerName}`]
+      tags: ['docker']
     };
 
     try {

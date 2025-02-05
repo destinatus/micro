@@ -161,9 +161,8 @@ export class ConsulService implements OnModuleInit, OnModuleDestroy {
       const selectedService =
         passingServices[Math.floor(Math.random() * passingServices.length)];
 
-      // In Docker, we want to use the container name for networking
-      const containerName = selectedService.Service.ID.split('-')[0];
-      const address = containerName;
+      // For Docker networking, use the service name as the hostname
+      const address = serviceName;
       
       this.logger.debug('Service details:');
       this.logger.debug('Object:');
@@ -172,7 +171,7 @@ export class ConsulService implements OnModuleInit, OnModuleDestroy {
         name: selectedService.Service.Service,
         address: selectedService.Service.Address,
         nodeAddress: selectedService.Node.Address,
-        resolvedAddress: containerName
+        resolvedAddress: serviceName
       }, null, 2));
       const port = selectedService.Service.Port;
 
