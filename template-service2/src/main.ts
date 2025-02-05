@@ -23,16 +23,36 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(httpApp, config);
   SwaggerModule.setup('api', httpApp, document);
   
-  // Create microservice
+  // Create microservice with improved error handling
   const microservice = await NestFactory.createMicroservice<MicroserviceOptions>(
     AppModule,
     {
       transport: Transport.TCP,
       options: {
-        port: port
+        port: port,
+        retryAttempts: 10,
+        retryDelay: 3000
       }
     },
   );
+
+  // Global error handling for microservice
+  microservice.useGlobalFilters({
+    catch: (exception: Error, host: any) => {
+      logger.error('Microservice error:', exception);
+      return exception;
+    }
+  });
+
+  // Handle shutdown gracefully
+  const signals = ['SIGTERM', 'SIGINT'];
+  signals.forEach(signal => {
+    process.on(signal, async () => {
+      logger.log(`Received ${signal}, gracefully shutting down...`);
+      await microservice.close();
+      process.exit(0);
+    });
+  });
 
   // Start both applications
   await Promise.all([

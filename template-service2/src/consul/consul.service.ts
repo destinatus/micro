@@ -41,11 +41,10 @@ export class ConsulService implements OnModuleInit, OnModuleDestroy {
     const registration = {
       id: this.serviceId,
       name: this.configService.get<Config['service']>('app.service').name,
-      address: 'template-service', // Use Docker service name
       port,
       check: {
         name: 'HTTP Health Check',
-        http: `http://localhost:${port}/health`, // Use localhost for self health check
+        http: `http://${process.env.HOSTNAME || os.hostname()}:${port}/health`,
         interval: '10s',
         timeout: '5s',
         status: 'passing',

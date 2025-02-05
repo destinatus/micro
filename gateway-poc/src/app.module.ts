@@ -26,7 +26,9 @@ import { HealthModule } from './health/health.module';
               transport: Transport.TCP,
               options: {
                 host: serviceInstance.address,
-                port: serviceInstance.port
+                port: serviceInstance.port,
+                retryAttempts: 10,
+                retryDelay: 3000
               },
             };
           } catch (error) {
