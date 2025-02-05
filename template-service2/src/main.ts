@@ -6,20 +6,15 @@ import { ConfigService } from '@nestjs/config';
 import { Config } from './config/configuration';
 
 async function bootstrap() {
-  // Create a temporary app to get the ConfigService
-  const tempApp = await NestFactory.create(AppModule);
-  const configService = tempApp.get<ConfigService>(ConfigService);
-  const port = configService.get<number>('app.port');
-  await tempApp.close();
-
   const logger = new Logger('Main');
   
+  // Create the microservice
   const app = await NestFactory.createMicroservice<MicroserviceOptions>(
     AppModule,
     {
       transport: Transport.TCP,
       options: {
-        port: port,
+        port: 3001, // We'll get the actual port after app is created
         retryAttempts: 20,
         retryDelay: 5000,
         host: '0.0.0.0'
@@ -44,6 +39,16 @@ async function bootstrap() {
       process.exit(0);
     });
   });
+
+  // Get the ConfigService and update the port
+  const configService = app.get<ConfigService>(ConfigService);
+  const port = configService.get<number>('app.port');
+  
+  // Update the options with the configured port
+  app.options.options = {
+    ...app.options.options,
+    port: port,
+  };
 
   await app.listen();
   logger.log(`Microservice is running on port ${port}`);
