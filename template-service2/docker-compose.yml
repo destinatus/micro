@@ -17,8 +17,6 @@ services:
       - LOG_LEVEL=debug
     networks:
       - microservice_net
-    depends_on:
-      - consul
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
       interval: 30s
