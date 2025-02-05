@@ -12,6 +12,14 @@ export interface Config {
   log: {
     level: string;
   };
+  database: {
+    host: string;
+    port: number;
+    username: string;
+    password: string;
+    database: string;
+    poolSize: number;
+  };
 }
 
 export const appConfig = registerAs(
@@ -27,6 +35,14 @@ export const appConfig = registerAs(
     },
     log: {
       level: process.env.LOG_LEVEL || 'info',
+    },
+    database: {
+      host: process.env.DB_HOST || 'localhost',
+      port: parseInt(process.env.DB_PORT || '5432', 10),
+      username: process.env.DB_USERNAME || 'postgres_user',
+      password: process.env.DB_PASSWORD || 'postgres_password',
+      database: process.env.DB_NAME || 'template_db',
+      poolSize: parseInt(process.env.DB_POOL_SIZE || '10', 10),
     },
   }),
 );
