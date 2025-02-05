@@ -22,6 +22,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 @ApiTags('Users')
 @Controller('template-service')
 export class GatewayController implements OnModuleInit {
+  
   private readonly logger = new Logger(GatewayController.name);
 
   constructor(
@@ -48,8 +49,6 @@ export class GatewayController implements OnModuleInit {
       const response = this.client.send({ cmd: 'findAllUsers' }, {});
       return await firstValueFrom(response);
     } catch (error) {
-      console.log(JSON.stringify(error))
-      console.log('error:' + error);
       this.logger.error('Error finding all users:', error?.message || error);
       throw new HttpException(
         'Service unavailable',
