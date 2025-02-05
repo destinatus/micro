@@ -31,20 +31,33 @@ export class ConnectionHandlerService implements OnModuleInit {
   }
 
   private setupClientEventHandlers() {
-    (this.client as any).client.on('connect', () => {
-      this.logger.log('Connected to template service');
-      this.isConnected = true;
-    });
+    const clientInstance = (this.client as any).client;
+    
+    if (!clientInstance || typeof clientInstance.on !== 'function') {
+      this.logger.warn('Client does not support event handlers, skipping event setup');
+      return;
+    }
 
-    (this.client as any).client.on('error', (err) => {
-      this.logger.error('Template service connection error:', err);
-    });
+    try {
+      clientInstance.on('connect', () => {
+        this.logger.log('Connected to template service');
+        this.isConnected = true;
+      });
 
-    (this.client as any).client.on('close', () => {
-      this.logger.warn('Template service connection closed');
-      this.isConnected = false;
-      this.reconnectWithBackoff();
-    });
+      clientInstance.on('error', (err) => {
+        this.logger.error('Template service connection error:', err);
+      });
+
+      clientInstance.on('close', () => {
+        this.logger.warn('Template service connection closed');
+        this.isConnected = false;
+        this.reconnectWithBackoff();
+      });
+
+      this.logger.log('Event handlers set up successfully');
+    } catch (error) {
+      this.logger.error('Failed to set up event handlers:', error);
+    }
   }
 
   private reconnectWithBackoff(attempt = 1, maxAttempts = 20) {
