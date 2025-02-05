@@ -41,6 +41,7 @@ export class ConsulService implements OnModuleInit, OnModuleDestroy {
     const registration = {
       id: this.serviceId,
       name: this.configService.get<Config['service']>('app.service').name,
+      address: process.env.HOSTNAME || os.hostname(),
       port,
       check: {
         name: 'HTTP Health Check',
@@ -83,10 +84,7 @@ export class ConsulService implements OnModuleInit, OnModuleDestroy {
       }
 
       const selectedService = services[Math.floor(Math.random() * services.length)];
-      const address =
-        selectedService.Service.Address ||
-        selectedService.Node.Address ||
-        'localhost';
+      const address = selectedService.Service.Address || selectedService.Service.ID.split('-')[0];
       const port = selectedService.Service.Port;
 
       this.logger.debug(`Selected service instance: ${address}:${port}`);

@@ -115,9 +115,7 @@ export class ConsulService implements OnModuleInit, OnModuleDestroy {
         passingServices[Math.floor(Math.random() * passingServices.length)];
 
       // Extract container name from service ID if address is empty
-      const address = selectedService.Service.Address ||
-        (selectedService.Service.ID.includes('-') ? selectedService.Service.ID.split('-').slice(0, -1).join('-') : selectedService.Node.Address) ||
-        'localhost';
+      const address = selectedService.Service.Address || selectedService.Service.ID.split('-')[0];
       const port = selectedService.Service.Port;
 
       this.logger.debug(`Selected service instance: ${address}:${port}`);
