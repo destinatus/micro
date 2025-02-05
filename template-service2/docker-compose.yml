@@ -1,0 +1,27 @@
+networks:
+  microservice_net:
+    external: true
+
+services:
+  template-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: template-service
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+      - CONSUL_HOST=consul
+      - CONSUL_PORT=8500
+      - LOG_LEVEL=debug
+    networks:
+      - microservice_net
+    depends_on:
+      - consul
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
