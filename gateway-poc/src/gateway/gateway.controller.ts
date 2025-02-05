@@ -10,7 +10,6 @@ import {
   HttpStatus,
   Logger,
   Inject,
-  OnModuleInit,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { ConsulService } from '../consul/consul.service';
@@ -21,7 +20,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 
 @ApiTags('Users')
 @Controller('template-service')
-export class GatewayController implements OnModuleInit {
+export class GatewayController {
   
   private readonly logger = new Logger(GatewayController.name);
 
@@ -29,16 +28,6 @@ export class GatewayController implements OnModuleInit {
     private readonly consulService: ConsulService,
     @Inject('TEMPLATE_SERVICE') private readonly client: ClientProxy,
   ) {}
-
-  async onModuleInit() {
-    try {
-      await this.client.connect();
-      this.logger.log('Successfully connected to template service');
-    } catch (error) {
-      this.logger.error('Failed to connect to template service:', error);
-      throw error; // Let NestJS handle reconnection
-    }
-  }
 
   @Get('users')
   @ApiOperation({ summary: 'Get all users', description: 'Retrieve a list of all users' })

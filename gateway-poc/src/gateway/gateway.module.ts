@@ -18,7 +18,11 @@ import { ConsulService } from '../consul/consul.service';
             transport: Transport.TCP,
             options: {
               host: service.address,
-              port: service.port
+              port: service.port,
+              retryAttempts: 5,
+              retryDelay: 3000,
+              keepalive: true,
+              reconnect: true
             },
           };
         },
