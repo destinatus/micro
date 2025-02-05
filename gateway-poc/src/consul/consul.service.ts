@@ -59,14 +59,20 @@ export class ConsulService implements OnModuleInit, OnModuleDestroy {
 
   private async registerService(): Promise<void> {
     const port = this.getServicePort();
+    const consulConfig = this.configService.get('app.consul');
+    
+    if (!consulConfig) {
+      throw new Error('Consul configuration not found');
+    }
+
     const registration: ServiceRegistration = {
       id: this.serviceId,
       name: 'api-gateway',
       port,
       check: {
-        http: `http://gateway:${port}/health`,
-        interval: '10s',
-        timeout: '5s',
+        http: `http://gateway:${port}${consulConfig.healthCheck.route}`,
+        interval: consulConfig.healthCheck.interval,
+        timeout: consulConfig.healthCheck.timeout,
         deregistercriticalserviceafter: '30s',
       },
     };
