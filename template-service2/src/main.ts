@@ -30,8 +30,9 @@ async function bootstrap() {
       transport: Transport.TCP,
       options: {
         port: port,
-        retryAttempts: 10,
-        retryDelay: 3000
+        retryAttempts: 20,
+        retryDelay: 5000,
+        host: '0.0.0.0'
       }
     },
   );

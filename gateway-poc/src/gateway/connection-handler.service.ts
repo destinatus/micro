@@ -6,7 +6,7 @@ import { ConsulService } from '../consul/consul.service';
 export class ConnectionHandlerService implements OnModuleInit {
   private readonly logger = new Logger(ConnectionHandlerService.name);
   private isConnected = false;
-  private readonly maxRetries = 3;
+  private readonly maxRetries = 5;
 
   constructor(
     private readonly consulService: ConsulService,
@@ -19,14 +19,17 @@ export class ConnectionHandlerService implements OnModuleInit {
 
   private async initializeConnection() {
     try {
-      await this.client.connect();
-      this.isConnected = true;
-      this.logger.log('Successfully connected to template service');
-      this.setupClientEventHandlers();
+      if (!this.isConnected) {
+        await this.client.connect();
+        this.isConnected = true;
+        this.logger.log('Successfully connected to template service');
+        this.setupClientEventHandlers();
+      }
     } catch (error) {
       this.logger.error('Failed to initialize connection:', error);
       this.isConnected = false;
-      this.reconnectWithBackoff();
+      // Don't trigger reconnect here - let the retry mechanism handle it
+      throw error;
     }
   }
 
@@ -60,24 +63,26 @@ export class ConnectionHandlerService implements OnModuleInit {
     }
   }
 
-  private reconnectWithBackoff(attempt = 1, maxAttempts = 20) {
+  private async reconnectWithBackoff(attempt = 1, maxAttempts = 20) {
     if (attempt > maxAttempts) {
       this.logger.error('Max reconnection attempts reached');
-      return;
+      throw new Error('Max reconnection attempts reached');
     }
 
     const delay = Math.min(1000 * Math.pow(2, attempt), 30000);
-    setTimeout(async () => {
-      try {
-        this.logger.log(`Attempting to reconnect (attempt ${attempt})`);
-        await this.client.connect();
-        this.isConnected = true;
-        this.logger.log('Successfully reconnected to template service');
-      } catch (error) {
-        this.logger.error(`Reconnection attempt ${attempt} failed:`, error);
-        this.reconnectWithBackoff(attempt + 1, maxAttempts);
-      }
-    }, delay);
+    await new Promise(resolve => setTimeout(resolve, delay));
+
+    try {
+      this.logger.log(`Attempting to reconnect (attempt ${attempt})`);
+      const service = await this.consulService.getService('template-service', true);
+      await this.client.close();
+      await this.client.connect();
+      this.isConnected = true;
+      this.logger.log('Successfully reconnected to template service');
+    } catch (error) {
+      this.logger.error(`Reconnection attempt ${attempt} failed:`, error);
+      return this.reconnectWithBackoff(attempt + 1, maxAttempts);
+    }
   }
 
   async executeWithRetry<T>(operation: () => Promise<T>): Promise<T> {
@@ -95,15 +100,7 @@ export class ConnectionHandlerService implements OnModuleInit {
         
         if (error?.message === 'Connection closed') {
           this.isConnected = false;
-          // Try to get a new service instance
-          try {
-            const service = await this.consulService.getService('template-service', true);
-            await this.client.close();
-            // The client will reconnect on next operation
-            this.logger.log(`Switching to new service instance: ${service.address}:${service.port}`);
-          } catch (consulError) {
-            this.logger.error('Failed to get new service instance:', consulError);
-          }
+          await this.reconnectWithBackoff();
         }
 
         if (attempt < this.maxRetries) {
@@ -113,6 +110,7 @@ export class ConnectionHandlerService implements OnModuleInit {
       }
     }
 
+    this.logger.error('All retry attempts failed');
     throw lastError;
   }
 }
