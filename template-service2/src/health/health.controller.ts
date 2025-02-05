@@ -1,28 +1,56 @@
 import { Controller, Get } from '@nestjs/common';
-import { HealthCheck, HealthCheckService, HttpHealthIndicator } from '@nestjs/terminus';
+import { Transport } from '@nestjs/microservices';
+import {
+  HealthCheck,
+  HealthCheckService,
+  MicroserviceHealthIndicator,
+} from '@nestjs/terminus';
+import { ConfigService } from '@nestjs/config';
 
 @Controller('health')
 export class HealthController {
   constructor(
     private health: HealthCheckService,
-    private http: HttpHealthIndicator,
+    private microservice: MicroserviceHealthIndicator,
+    private configService: ConfigService,
   ) {}
 
   @Get()
   @HealthCheck()
   check() {
-    return this.health.check([]);
+    const port = this.configService.get<number>('app.port');
+    return this.health.check([
+      () =>
+        this.microservice.pingCheck('tcp', {
+          transport: Transport.TCP,
+          options: { host: 'localhost', port },
+        }),
+    ]);
   }
 
   @Get('liveness')
   @HealthCheck()
   liveness() {
-    return this.health.check([]);
+    const port = this.configService.get<number>('app.port');
+    return this.health.check([
+      () =>
+        this.microservice.pingCheck('tcp', {
+          transport: Transport.TCP,
+          options: { host: 'localhost', port },
+        }),
+    ]);
   }
 
   @Get('readiness')
   @HealthCheck()
   readiness() {
-    return this.health.check([]);
+    const port = this.configService.get<number>('app.port');
+    return this.health.check([
+      () =>
+        this.microservice.pingCheck('tcp', {
+          transport: Transport.TCP,
+          options: { host: 'localhost', port },
+        }),
+    ]);
   }
 }

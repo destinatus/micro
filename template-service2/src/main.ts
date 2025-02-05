@@ -4,8 +4,6 @@ import { AppModule } from './app.module';
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Config } from './config/configuration';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-
 async function bootstrap() {
   // Create the HTTP application (needed for health checks)
   const httpApp = await NestFactory.create(AppModule);
@@ -14,15 +12,6 @@ async function bootstrap() {
   
   const logger = new Logger('Main');
 
-  // Setup Swagger
-  const config = new DocumentBuilder()
-    .setTitle('Template Service API')
-    .setDescription('The Template Service API description')
-    .setVersion('1.0')
-    .build();
-  const document = SwaggerModule.createDocument(httpApp, config);
-  SwaggerModule.setup('api', httpApp, document);
-  
   // Create microservice with improved error handling
   const microservice = await NestFactory.createMicroservice<MicroserviceOptions>(
     AppModule,
