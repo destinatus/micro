@@ -1,0 +1,30 @@
+{
+  "name": "microservice-monorepo",
+  "version": "1.0.0",
+  "description": "Microservice architecture with CDC using Debezium",
+  "scripts": {
+    "start:gateway": "cd gateway-poc && docker-compose up",
+    "start:service": "cd microservice-poc && docker-compose up",
+    "start:debezium": "cd debezium && docker-compose -f docker-compose.debezium.yml up",
+    "start:oracle": "cd oracle && docker-compose -f docker-compose.oracle.yml up",
+    "start:all": "docker-compose -f gateway-poc/docker-compose.yml -f microservice-poc/docker-compose.yml -f debezium/docker-compose.debezium.yml -f oracle/docker-compose.oracle.yml up",
+    "stop:all": "docker-compose -f gateway-poc/docker-compose.yml -f microservice-poc/docker-compose.yml -f debezium/docker-compose.debezium.yml -f oracle/docker-compose.oracle.yml down"
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.0.7",
+    "@nestjs/core": "^11.0.7",
+    "@nestjs/microservices": "^11.0.7",
+    "@nestjs/platform-express": "^11.0.7",
+    "@nestjs/config": "^4.0.0",
+    "consul": "^2.0.1",
+    "pg": "^8.11.3",
+    "uuid": "^9.0.1",
+    "@nestjs/event-emitter": "^2.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.16",
+    "@types/pg": "^8.11.0",
+    "typescript": "^5.3.3",
+    "@types/uuid": "^9.0.8"
+  }
+}

@@ -1,0 +1,26 @@
+networks:
+  microservice_net:
+    external: true
+
+services:
+  gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gateway
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - CONSUL_HOST=consul
+      - CONSUL_PORT=8500
+      - LOG_LEVEL=debug
+    ports:
+      - "3000:3000"
+    networks:
+      - microservice_net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s

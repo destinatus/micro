@@ -1,0 +1,21 @@
+networks:
+  microservice_net:
+    external: true
+
+services:
+  consul:
+    image: hashicorp/consul:1.15.4
+    container_name: consul
+    ports:
+      - "8500:8500"  # HTTP API and UI
+      - "8600:8600/tcp"  # DNS
+      - "8600:8600/udp"  # DNS
+    command: "agent -dev -client=0.0.0.0"
+    networks:
+      - microservice_net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8500/v1/status/leader"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
