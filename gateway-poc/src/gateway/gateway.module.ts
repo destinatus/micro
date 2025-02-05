@@ -3,6 +3,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
 import { GatewayController } from './gateway.controller';
 import { ConsulModule } from '../consul/consul.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConsulService } from '../consul/consul.service';
 
 @Module({
   imports: [
@@ -10,15 +11,18 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
     ClientsModule.registerAsync([
       {
         name: 'TEMPLATE_SERVICE',
-        imports: [ConfigModule],
-        useFactory: async (configService: ConfigService) => ({
-          transport: Transport.TCP,
-          options: {
-            host: 'template-service',
-            port: 3001
-          },
-        }),
-        inject: [ConfigService],
+        imports: [ConfigModule, ConsulModule],
+        useFactory: async (consulService: ConsulService) => {
+          const service = await consulService.getService('template-service');
+          return {
+            transport: Transport.TCP,
+            options: {
+              host: service.address,
+              port: service.port
+            },
+          };
+        },
+        inject: [ConsulService],
       },
     ]),
   ],

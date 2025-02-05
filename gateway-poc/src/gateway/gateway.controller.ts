@@ -14,7 +14,11 @@ import {
 import { ClientProxy } from '@nestjs/microservices';
 import { ConsulService } from '../consul/consul.service';
 import { firstValueFrom } from 'rxjs';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody } from '@nestjs/swagger';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 
+@ApiTags('Users')
 @Controller('template-service')
 export class GatewayController {
   private readonly logger = new Logger(GatewayController.name);
@@ -25,6 +29,9 @@ export class GatewayController {
   ) {}
 
   @Get('users')
+  @ApiOperation({ summary: 'Get all users', description: 'Retrieve a list of all users' })
+  @ApiResponse({ status: 200, description: 'List of users retrieved successfully' })
+  @ApiResponse({ status: 503, description: 'Service unavailable' })
   async findAllUsers() {
     try {
       return await firstValueFrom(
@@ -40,6 +47,10 @@ export class GatewayController {
   }
 
   @Get('users/:id')
+  @ApiOperation({ summary: 'Get user by ID', description: 'Retrieve a user by their ID' })
+  @ApiParam({ name: 'id', description: 'User ID' })
+  @ApiResponse({ status: 200, description: 'User retrieved successfully' })
+  @ApiResponse({ status: 503, description: 'Service unavailable' })
   async findOneUser(@Param('id') id: string) {
     try {
       return await firstValueFrom(
@@ -55,7 +66,11 @@ export class GatewayController {
   }
 
   @Post('users')
-  async createUser(@Body() createUserDto: any) {
+  @ApiOperation({ summary: 'Create user', description: 'Create a new user' })
+  @ApiBody({ type: CreateUserDto })
+  @ApiResponse({ status: 201, description: 'User created successfully' })
+  @ApiResponse({ status: 503, description: 'Service unavailable' })
+  async createUser(@Body() createUserDto: CreateUserDto) {
     try {
       return await firstValueFrom(
         this.client.send({ cmd: 'createUser' }, createUserDto)
@@ -70,7 +85,12 @@ export class GatewayController {
   }
 
   @Put('users/:id')
-  async updateUser(@Param('id') id: string, @Body() updateUserDto: any) {
+  @ApiOperation({ summary: 'Update user', description: 'Update an existing user by ID' })
+  @ApiParam({ name: 'id', description: 'User ID' })
+  @ApiBody({ type: UpdateUserDto })
+  @ApiResponse({ status: 200, description: 'User updated successfully' })
+  @ApiResponse({ status: 503, description: 'Service unavailable' })
+  async updateUser(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     try {
       return await firstValueFrom(
         this.client.send(
@@ -88,6 +108,10 @@ export class GatewayController {
   }
 
   @Delete('users/:id')
+  @ApiOperation({ summary: 'Delete user', description: 'Delete a user by ID' })
+  @ApiParam({ name: 'id', description: 'User ID' })
+  @ApiResponse({ status: 200, description: 'User deleted successfully' })
+  @ApiResponse({ status: 503, description: 'Service unavailable' })
   async deleteUser(@Param('id') id: string) {
     try {
       return await firstValueFrom(
