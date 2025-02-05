@@ -45,7 +45,7 @@ export const appConfig = registerAs('app', (): Config => {
     },
     services: {
       users: {
-        name: process.env.USERS_SERVICE_NAME || 'users-service',
+        name: process.env.USERS_SERVICE_NAME || 'template-service',
       },
     },
     log: {
