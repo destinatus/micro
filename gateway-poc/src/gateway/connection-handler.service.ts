@@ -24,11 +24,23 @@ export class ConnectionHandlerService implements OnModuleInit {
         this.isConnected = true;
         this.logger.log('Successfully connected to template service');
         this.setupClientEventHandlers();
+        
+        // Keep connection alive with periodic ping
+        setInterval(() => {
+          if (this.isConnected) {
+            this.client.send({ cmd: 'ping' }, {}).subscribe({
+              error: (err) => {
+                this.logger.warn('Ping failed:', err?.message || err);
+                this.isConnected = false;
+                this.reconnectWithBackoff();
+              }
+            });
+          }
+        }, 5000);
       }
     } catch (error) {
       this.logger.error('Failed to initialize connection:', error);
       this.isConnected = false;
-      // Don't trigger reconnect here - let the retry mechanism handle it
       throw error;
     }
   }
@@ -93,12 +105,24 @@ export class ConnectionHandlerService implements OnModuleInit {
         if (!this.isConnected) {
           await this.initializeConnection();
         }
-        return await operation();
+
+        // Set operation timeout
+        const timeout = new Promise<T>((_, reject) => {
+          setTimeout(() => reject(new Error('Operation timeout')), 10000);
+        });
+
+        // Execute operation with timeout
+        const result = await Promise.race<T>([operation(), timeout]);
+        
+        // If operation succeeds, ensure connection stays alive
+        this.isConnected = true;
+        return result;
+
       } catch (error) {
         lastError = error;
         this.logger.warn(`Attempt ${attempt} failed:`, error?.message || error);
         
-        if (error?.message === 'Connection closed') {
+        if (error?.message === 'Connection closed' || error?.message === 'Operation timeout') {
           this.isConnected = false;
           await this.reconnectWithBackoff();
         }
@@ -112,5 +136,18 @@ export class ConnectionHandlerService implements OnModuleInit {
 
     this.logger.error('All retry attempts failed');
     throw lastError;
+  }
+
+  async onModuleDestroy() {
+    try {
+      // Properly close the connection when the module is destroyed
+      if (this.isConnected) {
+        await this.client.close();
+        this.isConnected = false;
+        this.logger.log('Connection closed gracefully');
+      }
+    } catch (error) {
+      this.logger.error('Error closing connection:', error);
+    }
   }
 }

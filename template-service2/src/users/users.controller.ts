@@ -52,4 +52,9 @@ export class UsersController {
     // Handle user created event
     console.log('User created event:', user);
   }
+
+  @MessagePattern({ cmd: 'ping' })
+  ping() {
+    return { status: 'ok' };
+  }
 }
