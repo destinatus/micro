@@ -3,15 +3,11 @@ import {
   OnModuleInit,
   OnModuleDestroy,
   Logger,
+  Inject,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as os from 'os';
 import * as Consul from 'consul';
-
-interface ConsulConfig {
-  host: string;
-  port: number;
-}
 
 interface ServiceRegistration {
   id: string;
@@ -27,51 +23,25 @@ interface ServiceRegistration {
 
 @Injectable()
 export class ConsulService implements OnModuleInit, OnModuleDestroy {
-  private consul!: Consul.Consul;
   private readonly serviceId: string;
   private readonly logger = new Logger(ConsulService.name);
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(
+    @Inject('CONSUL_CLIENT') private readonly consul: Consul.Consul,
+    private readonly configService: ConfigService
+  ) {
     this.serviceId = `gateway-${process.env.HOSTNAME || os.hostname()}-${Date.now()}`;
   }
 
-  private getConsulConfig(): ConsulConfig {
-    const consulConfig = this.configService.get<ConsulConfig>('app.consul');
-    if (!consulConfig) {
-      throw new Error('Consul configuration not found');
-    }
-    return consulConfig;
-  }
-
-  private initializeConsul(): void {
+  async onModuleInit(): Promise<void> {
     try {
-      const config = this.getConsulConfig();
-      this.consul = new Consul({
-        host: config.host,
-        port: config.port,
-        promisify: true,
-      });
-      
-      this.logger.log(
-        `Consul client initialized with config: ${JSON.stringify({ host: config.host, port: config.port })}`,
-      );
+      await this.registerService();
+      this.logger.log('Gateway service registered with Consul');
     } catch (error) {
       const err = error instanceof Error ? error : new Error('Unknown error');
-      this.logger.error('Failed to initialize Consul client:', err.message);
+      this.logger.error('Failed to initialize Consul service:', err.message);
       throw err;
     }
-  }
-
-  private validateConsul(): void {
-    if (!this.consul) {
-      throw new Error('Consul client not initialized');
-    }
-  }
-
-  async onModuleInit(): Promise<void> {
-    this.initializeConsul();
-    await this.registerService();
-    this.logger.log('Gateway service registered with Consul');
   }
 
   async onModuleDestroy(): Promise<void> {
@@ -88,15 +58,13 @@ export class ConsulService implements OnModuleInit, OnModuleDestroy {
   }
 
   private async registerService(): Promise<void> {
-    this.validateConsul();
-
     const port = this.getServicePort();
     const registration: ServiceRegistration = {
       id: this.serviceId,
       name: 'api-gateway',
       port,
       check: {
-        http: `http://localhost:${port}/health`,
+        http: `http://gateway:${port}/health`,
         interval: '10s',
         timeout: '5s',
         deregistercriticalserviceafter: '30s',
@@ -114,8 +82,6 @@ export class ConsulService implements OnModuleInit, OnModuleDestroy {
   }
 
   private async deregisterService(): Promise<void> {
-    this.validateConsul();
-
     try {
       await this.consul.agent.service.deregister({ id: this.serviceId });
     } catch (error: unknown) {
@@ -127,8 +93,6 @@ export class ConsulService implements OnModuleInit, OnModuleDestroy {
   async getService(
     serviceName: string,
   ): Promise<{ address: string; port: number }> {
-    this.validateConsul();
-
     try {
       const result = await this.consul.health.service(serviceName);
       const services = result as Consul.Health.Service[];
