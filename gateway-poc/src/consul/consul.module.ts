@@ -11,8 +11,8 @@ import Consul from "consul";
       useFactory: (configService: ConfigService) => {
         const consulConfig = configService.get('app.consul');
         return new Consul({
-          host: consulConfig.host,
-          port: consulConfig.port,
+          host: 'consul',
+          port: 8500,
           promisify: true,
         });
       },
@@ -20,6 +20,6 @@ import Consul from "consul";
     },
     ConsulService,
   ],
-  exports: [ConsulService],
+  exports: [ConsulService, 'CONSUL_CLIENT'],
 })
 export class ConsulModule {}
