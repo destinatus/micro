@@ -1,0 +1,11 @@
+{
+  "name": "template-service2-test",
+  "version": "1.0.0",
+  "description": "Test client for template-service2",
+  "main": "test-client.js",
+  "dependencies": {
+    "@nestjs/microservices": "^10.0.0",
+    "@nestjs/common": "^10.0.0",
+    "rxjs": "^7.8.1"
+  }
+}
