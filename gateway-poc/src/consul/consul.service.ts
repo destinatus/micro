@@ -27,7 +27,8 @@ export class ConsulService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(ConsulService.name);
 
   constructor(
-    @Inject('CONSUL_CLIENT') private readonly consul: Consul.Consul,
+    @Inject('CONSUL_CLIENT')
+    private readonly consul: Consul.Consul,
     private readonly configService: ConfigService
   ) {
     this.serviceId = `gateway-${process.env.HOSTNAME || os.hostname()}-${Date.now()}`;
