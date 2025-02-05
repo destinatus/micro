@@ -38,14 +38,15 @@ export class ConsulService implements OnModuleInit, OnModuleDestroy {
 
   private async registerService(): Promise<void> {
     const port = this.getServicePort();
+    const containerName = 'template-service2-template-service-1';
     const registration = {
       id: this.serviceId,
       name: this.configService.get<Config['service']>('app.service').name,
-      address: process.env.HOSTNAME || os.hostname(),
+      address: containerName,
       port,
       check: {
         name: 'HTTP Health Check',
-        http: `http://${process.env.HOSTNAME || os.hostname()}:${port}/health`,
+        http: `http://${containerName}:${port}/health`,
         interval: '10s',
         timeout: '5s',
         status: 'passing',
