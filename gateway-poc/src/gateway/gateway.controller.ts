@@ -12,7 +12,7 @@ import {
   Inject,
   OnModuleInit,
 } from '@nestjs/common';
-import { ClientProxy, ClientTCP } from '@nestjs/microservices';
+import { ClientProxy } from '@nestjs/microservices';
 import { ConsulService } from '../consul/consul.service';
 import { firstValueFrom } from 'rxjs';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody } from '@nestjs/swagger';
@@ -26,26 +26,13 @@ export class GatewayController implements OnModuleInit {
 
   constructor(
     private readonly consulService: ConsulService,
-    @Inject('TEMPLATE_SERVICE') private readonly client: ClientTCP,
+    @Inject('TEMPLATE_SERVICE') private readonly client: ClientProxy,
   ) {}
 
   async onModuleInit() {
     try {
       await this.client.connect();
       this.logger.log('Successfully connected to template service');
-
-      // Listen for connection events
-      (this.client as any).getSocketRef()?.on('connect', () => {
-        this.logger.log('Reconnected to template service');
-      });
-
-      (this.client as any).getSocketRef()?.on('error', (err) => {
-        this.logger.error('Template service connection error:', err);
-      });
-
-      (this.client as any).getSocketRef()?.on('close', () => {
-        this.logger.warn('Template service connection closed');
-      });
     } catch (error) {
       this.logger.error('Failed to connect to template service:', error);
       throw error; // Let NestJS handle reconnection
