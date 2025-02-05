@@ -37,9 +37,10 @@ import { ConsulService } from '../consul/consul.service';
   controllers: [GatewayController],
 })
 export class GatewayModule implements OnApplicationBootstrap {
+  private readonly logger = new Logger(GatewayModule.name);
+  
   constructor(
-    @Inject('TEMPLATE_SERVICE') private readonly client: ClientProxy,
-    private readonly logger: Logger = new Logger(GatewayModule.name)
+    @Inject('TEMPLATE_SERVICE') private readonly client: ClientProxy
   ) {}
 
   async onApplicationBootstrap() {
