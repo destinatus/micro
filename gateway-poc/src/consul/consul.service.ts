@@ -25,6 +25,9 @@ interface ServiceRegistration {
 export class ConsulService implements OnModuleInit, OnModuleDestroy {
   private readonly serviceId: string;
   private readonly logger = new Logger(ConsulService.name);
+  private healthCheckInterval: NodeJS.Timeout;
+  private readonly serviceCache: Map<string, { address: string; port: number; lastCheck: number }> = new Map();
+  private readonly CACHE_TTL = 10000; // 10 seconds
 
   constructor(
     @Inject('CONSUL_CLIENT')
@@ -38,6 +41,16 @@ export class ConsulService implements OnModuleInit, OnModuleDestroy {
     try {
       await this.registerService();
       this.logger.log('Gateway service registered with Consul');
+      
+      // Start periodic health checks
+      this.healthCheckInterval = setInterval(async () => {
+        try {
+          await this.checkServicesHealth();
+        } catch (error) {
+          this.logger.error('Health check failed:', error);
+        }
+      }, 5000); // Check every 5 seconds
+      
     } catch (error) {
       const err = error instanceof Error ? error : new Error('Unknown error');
       this.logger.error('Failed to initialize Consul service:', err.message);
@@ -46,8 +59,30 @@ export class ConsulService implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleDestroy(): Promise<void> {
+    if (this.healthCheckInterval) {
+      clearInterval(this.healthCheckInterval);
+    }
     await this.deregisterService();
     this.logger.log('Gateway service deregistered from Consul');
+  }
+
+  private async checkServicesHealth(): Promise<void> {
+    const services = Array.from(this.serviceCache.keys());
+    for (const serviceName of services) {
+      try {
+        const result = await this.consul.health.service(serviceName);
+        const healthyServices = (result as Consul.Health.Service[]).filter(
+          (service) => service.Checks.every((check) => check.Status === 'passing')
+        );
+
+        if (healthyServices.length === 0) {
+          this.logger.warn(`No healthy instances found for service: ${serviceName}`);
+          this.serviceCache.delete(serviceName);
+        }
+      } catch (error) {
+        this.logger.error(`Health check failed for service ${serviceName}:`, error);
+      }
+    }
   }
 
   private getServicePort(): number {
@@ -99,8 +134,18 @@ export class ConsulService implements OnModuleInit, OnModuleDestroy {
 
   async getService(
     serviceName: string,
+    forceRefresh = false
   ): Promise<{ address: string; port: number }> {
     try {
+      // Check cache first
+      const cached = this.serviceCache.get(serviceName);
+      const now = Date.now();
+      
+      if (!forceRefresh && cached && (now - cached.lastCheck) < this.CACHE_TTL) {
+        return { address: cached.address, port: cached.port };
+      }
+
+      // If cache miss or force refresh, query Consul
       const result = await this.consul.health.service(serviceName);
       const services = result as Consul.Health.Service[];
       
@@ -109,6 +154,7 @@ export class ConsulService implements OnModuleInit, OnModuleDestroy {
       );
 
       if (!passingServices || passingServices.length === 0) {
+        this.serviceCache.delete(serviceName);
         throw new Error(`No healthy instances of service ${serviceName} found`);
       }
 
@@ -130,6 +176,13 @@ export class ConsulService implements OnModuleInit, OnModuleDestroy {
       const port = selectedService.Service.Port;
 
       this.logger.debug(`Selected service instance: ${address}:${port}`);
+
+      // Update cache
+      this.serviceCache.set(serviceName, {
+        address,
+        port,
+        lastCheck: Date.now()
+      });
 
       return { address, port };
     } catch (error: unknown) {
