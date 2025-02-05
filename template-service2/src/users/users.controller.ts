@@ -1,43 +1,19 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Put,
-  Delete,
-  Body,
-  Param,
-  NotFoundException,
-  HttpCode,
-  HttpStatus,
-} from '@nestjs/common';
+import { Controller, NotFoundException } from '@nestjs/common';
+import { MessagePattern, EventPattern } from '@nestjs/microservices';
 import { UsersService } from './users.service';
 import { CreateUserDto, UpdateUserDto, User } from './interfaces/user.interface';
-import { 
-  ApiTags, 
-  ApiOperation, 
-  ApiResponse, 
-  ApiParam,
-  ApiBody 
-} from '@nestjs/swagger';
 
-@ApiTags('users')
-@Controller('users')
+@Controller()
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @ApiOperation({ summary: 'Get all users', description: 'Retrieve a list of all users' })
-  @ApiResponse({ status: 200, description: 'List of users retrieved successfully', type: [User] })
-  @Get()
+  @MessagePattern({ cmd: 'findAllUsers' })
   async findAll(): Promise<User[]> {
     return this.usersService.findAll();
   }
 
-  @ApiOperation({ summary: 'Get a user by ID', description: 'Retrieve a specific user by their ID' })
-  @ApiParam({ name: 'id', description: 'The ID of the user' })
-  @ApiResponse({ status: 200, description: 'User retrieved successfully', type: User })
-  @ApiResponse({ status: 404, description: 'User not found' })
-  @Get(':id')
-  async findOne(@Param('id') id: string): Promise<User> {
+  @MessagePattern({ cmd: 'findOneUser' })
+  async findOne(id: string): Promise<User> {
     const user = await this.usersService.findOne(id);
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
@@ -45,25 +21,17 @@ export class UsersController {
     return user;
   }
 
-  @ApiOperation({ summary: 'Create a new user', description: 'Create a new user with the provided data' })
-  @ApiBody({ type: CreateUserDto })
-  @ApiResponse({ status: 201, description: 'User created successfully', type: User })
-  @Post()
-  @HttpCode(HttpStatus.CREATED)
-  async create(@Body() createUserDto: CreateUserDto): Promise<User> {
-    return this.usersService.create(createUserDto);
+  @MessagePattern({ cmd: 'createUser' })
+  async create(createUserDto: CreateUserDto): Promise<User> {
+    const user = await this.usersService.create(createUserDto);
+    // Emit an event after user creation
+    this.emitUserCreated(user);
+    return user;
   }
 
-  @ApiOperation({ summary: 'Update a user', description: 'Update an existing user by their ID' })
-  @ApiParam({ name: 'id', description: 'The ID of the user to update' })
-  @ApiBody({ type: UpdateUserDto })
-  @ApiResponse({ status: 200, description: 'User updated successfully', type: User })
-  @ApiResponse({ status: 404, description: 'User not found' })
-  @Put(':id')
-  async update(
-    @Param('id') id: string,
-    @Body() updateUserDto: UpdateUserDto,
-  ): Promise<User> {
+  @MessagePattern({ cmd: 'updateUser' })
+  async update(data: { id: string; updateUserDto: UpdateUserDto }): Promise<User> {
+    const { id, updateUserDto } = data;
     const user = await this.usersService.update(id, updateUserDto);
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
@@ -71,16 +39,17 @@ export class UsersController {
     return user;
   }
 
-  @ApiOperation({ summary: 'Delete a user', description: 'Delete a user by their ID' })
-  @ApiParam({ name: 'id', description: 'The ID of the user to delete' })
-  @ApiResponse({ status: 204, description: 'User deleted successfully' })
-  @ApiResponse({ status: 404, description: 'User not found' })
-  @Delete(':id')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  async remove(@Param('id') id: string): Promise<void> {
+  @MessagePattern({ cmd: 'deleteUser' })
+  async remove(id: string): Promise<void> {
     const deleted = await this.usersService.remove(id);
     if (!deleted) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
+  }
+
+  @EventPattern('user.created')
+  async emitUserCreated(user: User) {
+    // Handle user created event
+    console.log('User created event:', user);
   }
 }
