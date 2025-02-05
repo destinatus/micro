@@ -26,11 +26,11 @@ async function bootstrap() {
 
   // Start both applications
   await Promise.all([
-    httpApp.listen(port),
+    httpApp.listen(port, '0.0.0.0'),
     microservice.listen()
   ]);
 
-  logger.log(`HTTP application is running on port ${port}`);
+  logger.log(`HTTP application is running on: 0.0.0.0:${port}`);
   logger.log(`Microservice is running on port ${port}`);
 }
 
