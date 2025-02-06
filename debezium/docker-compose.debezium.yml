@@ -76,6 +76,24 @@ services:
     networks:
       - microservice_net
 
+  debezium-ui:
+    image: debezium/debezium-ui:2.4
+    container_name: debezium-ui
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_CONNECT_URIS: http://debezium:8083
+    depends_on:
+      - debezium
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - microservice_net
+
 networks:
   microservice_net:
     external: true
